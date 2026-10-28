@@ -1,0 +1,51 @@
+## Interface: 16001
+## Title: Rolodex
+## Author: madloc2525
+## Version: 0.1.0
+## SavedVariables: RolodexDB
+
+
+
+Rolodex.lua
+
+Core\Init.lua
+Core\Commands.lua
+# Core\CoreEvents.lua
+# Core\Constants.lua
+
+Database\Database.lua
+
+# Database\Migration.lua
+# Database\Session.lua
+
+
+
+# UI\Theme.lua
+# UI\MainFrame.lua
+
+
+# UI\PlayerFrame.lua
+# UI\RatingPrompt.lua
+# UI\Widgets.lua
+
+
+
+
+# Chat\ChatHooks.lua
+
+# Future
+# Chat\Tooltips.lua
+
+
+# Integration\Skin.lua
+
+# Future
+# Integration\ContextMenus.lua
+
+
+# Locales
+
+# Locales\enUS.lua
+# Locales\deDe.lu
+# locales\esES.lua
+# locales\frFR.lua
