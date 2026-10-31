@@ -44,14 +44,25 @@ function DB:Initialize()
 end
 
 
--- Player Creation
+-- Player Creation (defensive)
 -- -------------------------------------------------------------------------------------
 
 function DB:CreatePlayer(name)
 
+
+    -- debugging
+    print("CreatePlayer called")
+    print("RolodexDB:", RolodexDB)
+    print("Players:", RolodexDB and RolodexDB.players)
+    -- /debugging
+    
     if not name or name == "" then
         return nil
     end
+
+    -- Safety net.
+    RolodexDB = RolodexDB or {}
+    RolodexDB.players = RolodexDB.players or {}
 
     -- Return existing player if already present.
     if RolodexDB.players[name] then
@@ -86,12 +97,20 @@ function DB:CreatePlayer(name)
 end
 
 -- 
--- Player Retrieval
+-- Player Retrieval (defensive, update later)
 -- ----------------------------------------------------------------------------------
 
 function DB:GetPlayer(name)
 
     if not name then
+        return nil
+    end
+
+    if not RolodexDB then
+        return nil
+    end
+
+    if not RolodexDB.players then
         return nil
     end
 
