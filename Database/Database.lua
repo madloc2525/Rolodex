@@ -169,6 +169,14 @@ function DB:SetGuild(name, guild)
 
 end
 
+function DB:UpdateLastSeen(name)
+
+    local player = self:GetOrCreatePlayer(name)
+
+    player.lastSeen = time()
+
+end
+
 function DB:SetLastSeenLevel(name, level)
 
     local player = self:GetOrCreatePlayer(name)
@@ -349,6 +357,42 @@ function DB:GetAverageRating(name)
     return total / #player.ratings
 
 end
+
+function DB:GetRatingHistoryString(name)
+
+    local player =
+        self:GetPlayer(name)
+
+    if not player then
+        return ""
+    end
+
+    if not player.ratings then
+        return ""
+    end
+
+    local history = {}
+
+    for _, rating in ipairs(
+        player.ratings
+    ) do
+
+        table.insert(
+            history,
+            tostring(
+                rating.value
+            )
+        )
+
+    end
+
+    return table.concat(
+        history,
+        ", "
+    )
+
+end
+
 
 -- 
 -- Utility / misc

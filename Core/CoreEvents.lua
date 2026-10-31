@@ -142,11 +142,6 @@ function Core:ScanGroup()
 
             if name then
 
-                local player =
-                    addon.DB:GetOrCreatePlayer(
-                        name
-                    )
-
                 addon.DB:UpdateLastSeen(
                     name
                 )

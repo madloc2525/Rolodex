@@ -196,5 +196,21 @@ function Rolodex:PLAYER_LOGIN()
 
 end
 
+-- Format Timestamp (returns %Y-%m-%d)
+
+function Rolodex:FormatTimestamp(timestamp)
+
+    if not timestamp then
+        return "Unknown"
+    end
+
+    return date(
+        "%Y-%m-%d",
+        timestamp
+    )
+
+end
+
+
 -- ----------------------------------------------------------------------------
 -- End Rolodex.lua
