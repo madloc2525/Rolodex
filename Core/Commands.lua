@@ -40,7 +40,15 @@ SlashCmdList["ROLODEX"] = function()
         return
     end
 
-    addon:Print("UI not implemented yet.")
+        if addon.UI and addon.UI.ToggleMainFrame then
+
+        addon.UI:ToggleMainFrame()
+
+    else
+
+        addon:Print("UI unavailable.")
+
+    end
 
 end
 

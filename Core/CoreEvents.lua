@@ -1,0 +1,174 @@
+-- ============================================================================
+-- CoreEvents.lua
+--
+--
+-- Responsibilities:
+--
+-- - Register core Blizzard events.
+-- - Detect group changes.
+-- - Scan current group members.
+-- - Automatically create player records.
+-- - Update basic player information.
+--
+-- WIP:
+--
+-- - Session tracking.
+-- - Run history.
+-- - Dungeon detection (instance detection)
+-- - Queue rating prompts.
+--
+-- ============================================================================
+
+local addon = Rolodex
+
+addon.Core = addon.Core or {}
+
+local Core = addon.Core
+
+-- ============================================================================
+-- Event Registration
+-- ============================================================================
+
+function Core:RegisterEvents()
+
+    addon.Frame:RegisterEvent(
+        "PLAYER_ENTERING_WORLD"
+    )
+
+    addon.Frame:RegisterEvent(
+        "GROUP_ROSTER_UPDATE"
+    )
+
+    addon:DebugPrint(
+        "Core events registered."
+    )
+
+end
+
+-- ============================================================================
+-- Event Handlers
+-- ============================================================================
+
+function addon:PLAYER_ENTERING_WORLD()
+
+    addon:DebugPrint(
+        "PLAYER_ENTERING_WORLD"
+    )
+
+    Core:ScanGroup()
+
+end
+
+function addon:GROUP_ROSTER_UPDATE()
+
+    addon:DebugPrint(
+        "GROUP_ROSTER_UPDATE"
+    )
+
+    Core:ScanGroup()
+
+end
+
+-- ============================================================================
+-- Group Scanner
+--
+-- Scans all visible group members and ensures
+-- they exist in the database.
+-- ============================================================================
+--
+-- MVP:
+--
+-- - Create players automatically.
+-- - Update Last Seen timestamp.
+-- - Update class.
+--
+-- Future:
+--
+-- - Guild.
+-- - Level.
+-- - Spec.
+-- - Role.
+-- - Session tracking.
+--
+-- ============================================================================
+
+function Core:ScanGroup()
+
+    addon:DebugPrint(
+        "Scanning group..."
+    )
+
+    -- Not grouped.
+    if not IsInGroup()
+    and not IsInRaid() then
+
+        addon:DebugPrint(
+            "No group detected."
+        )
+
+        return
+
+    end
+
+    local count =
+        GetNumGroupMembers()
+
+    addon:DebugPrint(
+        "Members found:",
+        count
+    )
+
+    for i = 1, count do
+
+        local unit
+
+        if IsInRaid() then
+
+            unit = "raid" .. i
+
+        else
+
+            unit = "party" .. i
+
+        end
+
+        if UnitExists(unit) then
+
+            local name =
+                UnitName(unit)
+
+            local _, class =
+                UnitClass(unit)
+
+            if name then
+
+                local player =
+                    addon.DB:GetOrCreatePlayer(
+                        name
+                    )
+
+                addon.DB:UpdateLastSeen(
+                    name
+                )
+
+                addon.DB:SetClass(
+                    name,
+                    class
+                )
+
+                addon:DebugPrint(
+                    "Tracked:",
+                    name
+                )
+
+            end
+
+        end
+
+    end
+
+end
+
+-- ============================================================================
+-- End CoreEvents.lua
+-- ============================================================================

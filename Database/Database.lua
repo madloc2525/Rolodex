@@ -50,12 +50,6 @@ end
 function DB:CreatePlayer(name)
 
 
-    -- debugging
-    print("CreatePlayer called")
-    print("RolodexDB:", RolodexDB)
-    print("Players:", RolodexDB and RolodexDB.players)
-    -- /debugging
-    
     if not name or name == "" then
         return nil
     end
@@ -75,7 +69,12 @@ function DB:CreatePlayer(name)
 
         class = "UNKNOWN",
         guild = "",
-        level = 0,
+        lastSeenLevel = 0,
+        lastSeenSpec = "Unknown",
+
+        firstRunTogether = time(),
+
+        lastRunTogether = time(),
 
         firstSeen = time(),
         lastSeen = time(),
@@ -91,6 +90,9 @@ function DB:CreatePlayer(name)
     }
 
     RolodexDB.players[name] = player
+
+    
+
 
     return player
 
@@ -167,19 +169,47 @@ function DB:SetGuild(name, guild)
 
 end
 
-function DB:SetLevel(name, level)
+function DB:SetLastSeenLevel(name, level)
 
     local player = self:GetOrCreatePlayer(name)
 
-    player.level = level or 0
+    player.lastSeenLevel = level or 0
 
 end
 
-function DB:UpdateLastSeen(name)
+function DB:SetLastSeenSpec(name, spec)
 
     local player = self:GetOrCreatePlayer(name)
 
-    player.lastSeen = time()
+    player.lastSeenSpec = spec or "Unknown"
+
+end
+
+function DB:SetLastRunTogether(name)
+
+    local player = self:GetOrCreatePlayer(name)
+
+    player.lastRunTogether = time()
+
+end
+
+function DB:GetLastRating(name)
+
+    local player = self:GetPlayer(name)
+
+    if not player then
+        return 0
+    end
+
+    if not player.ratings then
+        return 0
+    end
+
+    if #player.ratings == 0 then
+        return 0
+    end
+
+    return player.ratings[#player.ratings].value
 
 end
 
@@ -272,7 +302,7 @@ function DB:AddRating(name, rating)
 
     rating = tonumber(rating)
 
-    -- Only allow the Rolodex scale.
+    -- Only allow the Rolodex rating scale.
     if rating ~= 1 and rating ~= 2 and rating ~= 3 then
         return false
     end

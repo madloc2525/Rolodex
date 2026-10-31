@@ -10,7 +10,7 @@ Rolodex.lua
 
 Core\Init.lua
 Core\Commands.lua
-# Core\CoreEvents.lua
+Core\CoreEvents.lua
 # Core\Constants.lua
 
 Database\Database.lua
@@ -21,7 +21,7 @@ Database\Database.lua
 
 
 # UI\Theme.lua
-# UI\MainFrame.lua
+UI\MainFrame.lua
 
 
 # UI\PlayerFrame.lua
