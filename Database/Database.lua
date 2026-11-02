@@ -169,6 +169,33 @@ function DB:SetGuild(name, guild)
 
 end
 
+function DB:SetLastSeenLevel(
+    name,
+    level
+)
+
+    local player =
+        self:GetOrCreatePlayer(name)
+
+    player.lastSeenLevel =
+        level
+
+end
+
+function DB:SetLastSeenRole(
+    name,
+    role
+)
+
+    local player =
+        self:GetOrCreatePlayer(name)
+
+    player.lastSeenRole =
+        role
+
+end
+
+
 function DB:UpdateLastSeen(name)
 
     local player = self:GetOrCreatePlayer(name)
@@ -301,6 +328,7 @@ function DB:IsAvoided(name)
 end
 
 
+
 -- Ratings
 -- ----------------------------------------------------------------------------------
 
@@ -393,6 +421,21 @@ function DB:GetRatingHistoryString(name)
 
 end
 
+function DB:GetLastRating(name)
+
+    local ratings =
+        self:GetRatings(name)
+
+    if not ratings
+    or #ratings == 0 then
+
+        return nil
+
+    end
+
+    return ratings[#ratings].value
+
+end
 
 -- 
 -- Utility / misc

@@ -100,12 +100,11 @@ end
 -- - Create players automatically.
 -- - Update Last Seen timestamp.
 -- - Update class.
+-- - Update level.
 --
 -- Future:
 --
 -- - Guild.
--- - Level.
--- - Spec.
 -- - Role.
 -- - Session tracking.
 --
@@ -161,6 +160,14 @@ function Core:ScanGroup()
             local _, class =
                 UnitClass(unit)
 
+            local level =
+                UnitLevel(unit)
+
+            local role =
+                UnitGroupRolesAssigned(
+                    unit
+                )
+
             if name then
 
                 addon.DB:UpdateLastSeen(
@@ -172,9 +179,25 @@ function Core:ScanGroup()
                     class
                 )
 
+                addon.DB:SetLastSeenLevel(
+                    name,
+                    level
+                )
+
+                addon.DB:SetLastSeenRole(
+                    name,
+                    role
+                )
+
                 addon:DebugPrint(
-                    "Tracked:",
-                    name
+                    "CHARACTER: " ..
+                    tostring(name) ..
+                    " CLASS: " ..
+                    tostring(class) ..
+                    " LEVEL: " ..
+                    tostring(level) ..
+                    " ROLE: " ..
+                    tostring(role)
                 )
 
             end

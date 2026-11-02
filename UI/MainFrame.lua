@@ -452,7 +452,7 @@ function UI:CreateMainFrame()
         "BasicFrameTemplateWithInset"
     )
 
-    frame.DetailCard:SetSize(340, 250)
+    frame.DetailCard:SetSize(600, 250)
 
     frame.DetailCard:SetFrameStrata("HIGH")
     frame.DetailCard:SetFrameLevel(100)
@@ -661,16 +661,17 @@ function UI:CreateMainFrame()
     )
 
     -- ==========================================================
-    -- HISTORICAL SECTION
+    -- Detail Cards columns (rating and historical)
     -- ==========================================================
 
-    card.FirstSeenText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
+    card.CharacterHeader =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontHighlight"
+        )
 
-    card.FirstSeenText:SetPoint(
+    card.CharacterHeader:SetPoint(
         "TOPLEFT",
         card.Divider,
         "BOTTOMLEFT",
@@ -678,77 +679,276 @@ function UI:CreateMainFrame()
         -10
     )
 
-    card.LastSeenText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
+    card.CharacterHeader:SetText(
+        "Character"
     )
 
-    card.LastSeenText:SetPoint(
-        "TOPLEFT",
-        card.FirstSeenText,
-        "BOTTOMLEFT",
-        0,
-        -5
-    )
-
-    card.LastLevelText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
+    card.LastLevelText =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
 
     card.LastLevelText:SetPoint(
         "TOPLEFT",
-        card.LastSeenText,
+        card.CharacterHeader,
         "BOTTOMLEFT",
         0,
-        -5
+        -10
     )
 
-    card.LastSpecText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
+    card.LastRoleText =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
 
-    card.LastSpecText:SetPoint(
+    card.LastRoleText:SetPoint(
+            "TOPLEFT",
+            card.LastLevelText,
+            "BOTTOMLEFT",
+            0,
+            -12
+    )
+-- ==========================================================
+-- RATING COLUMN
+-- ==========================================================
+
+    card.RatingHeader =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontHighlight"
+        )
+
+    card.RatingHeader:SetPoint(
         "TOPLEFT",
-        card.LastLevelText,
+        card.Divider,
         "BOTTOMLEFT",
-        0,
-        -5
+        120,
+        0
     )
 
-    card.LastRatingText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
+    card.RatingHeader:SetText(
+        "Rating"
     )
+
+    card.CurrentRatingText =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    card.CurrentRatingText:SetPoint(
+        "TOPLEFT",
+        card.RatingHeader,
+        "BOTTOMLEFT",
+        0,
+        -10
+    )
+
+-- Rating Buttons
+-- ==========================================================
+
+        card.Rating1Button =
+            CreateFrame(
+                "Button",
+                nil,
+                card,
+                "UIPanelButtonTemplate"
+            )
+
+        card.Rating1Button:SetSize(
+            25,
+            20
+        )
+
+        card.Rating1Button:SetPoint(
+            "TOPLEFT",
+            card.CurrentRatingText,
+            "BOTTOMLEFT",
+            0,
+            -10
+        )
+
+        card.Rating1Button:SetText("1")
+
+
+        card.Rating2Button =
+            CreateFrame(
+                "Button",
+                nil,
+                card,
+                "UIPanelButtonTemplate"
+            )
+
+        card.Rating2Button:SetSize(
+            25,
+            20
+        )
+
+        card.Rating2Button:SetPoint(
+            "LEFT",
+            card.Rating1Button,
+            "RIGHT",
+            5,
+            0
+        )
+
+        card.Rating2Button:SetText("2")
+
+
+        card.Rating3Button =
+            CreateFrame(
+                "Button",
+                nil,
+                card,
+                "UIPanelButtonTemplate"
+            )
+
+        card.Rating3Button:SetSize(
+            25,
+            20
+        )
+
+        card.Rating3Button:SetPoint(
+            "LEFT",
+            card.Rating2Button,
+            "RIGHT",
+            5,
+            0
+        )
+
+        card.Rating3Button:SetText("3")
+
+
+
+    card.LastRatingText =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
 
     card.LastRatingText:SetPoint(
-        "TOPLEFT",
-        card.LastSpecText,
-        "BOTTOMLEFT",
-        0,
-        -5
+            "TOPLEFT",
+            card.Rating1Button,
+            "BOTTOMLEFT",
+            0,
+            -10
+        )
+
+        card.Rating1Button:SetScript(
+    "OnClick",
+    function()
+
+        addon.DB:AddRating(
+            UI.ExpandedPlayer,
+            1
+        )
+
+        UI:Refresh()
+
+    end
     )
 
-    card.RatingHistoryText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormalSmall"
+    card.Rating2Button:SetScript(
+        "OnClick",
+        function()
+
+            addon.DB:AddRating(
+                UI.ExpandedPlayer,
+                2
+            )
+
+            UI:Refresh()
+
+        end
     )
 
-    card.RatingHistoryText:SetWidth(300)
-    card.RatingHistoryText:SetJustifyH("LEFT")
+    card.Rating3Button:SetScript(
+        "OnClick",
+        function()     
 
-    card.RatingHistoryText:SetPoint(
+            addon.DB:AddRating(
+                UI.ExpandedPlayer,
+                3
+            )
+
+            UI:Refresh()
+
+        end
+    )
+
+-- ==========================================================
+-- HISTORY COLUMN
+-- ==========================================================
+
+    card.HistoryHeader =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontHighlight"
+        )
+
+    card.HistoryHeader:SetPoint(
         "TOPLEFT",
-        card.LastRatingText,
+        card.RatingHeader,
+        "TOPRIGHT",
+        120,
+        0
+    )
+
+    card.HistoryHeader:SetText(
+        "History"
+    )
+
+    card.FirstSeenText =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    card.FirstSeenText:SetPoint(
+        "TOPLEFT",
+        card.HistoryHeader,
         "BOTTOMLEFT",
         0,
-        -5
+        -10
+    )
+
+    card.LastSeenText =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    card.LastSeenText:SetPoint(
+            "TOPLEFT",
+            card.FirstSeenText,
+            "BOTTOMLEFT",
+            0,
+            -12
+    )
+
+    card.RunsHistoryText =
+        card:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    card.RunsHistoryText:SetPoint(
+            "TOPLEFT",
+            card.LastSeenText,
+            "BOTTOMLEFT",
+            0,
+            -12
     )
 
     -- Note Frame Editor Window
@@ -1061,16 +1261,7 @@ function UI:RefreshPlayerList()
             local player =
                 addon.DB:GetPlayer(
                     playerName
-                )
-            
-            print(
-                "FLAG DEBUG:",
-                playerName,
-                "favorite=",
-                tostring(player.favorite),
-                "avoid=",
-                tostring(player.avoid)
-            )    
+                )  
 
             row.PlayerName =
                 playerName
@@ -1279,10 +1470,9 @@ function UI:RefreshDetailCard()
 
     end
 
-    local card =
+        local card =
         self.MainFrame.DetailCard
 
-    -- ==========================================================
     -- Position Card
     -- ==========================================================
 
@@ -1296,12 +1486,11 @@ function UI:RefreshDetailCard()
         5
     )
 
-    -- ==========================================================
-    -- Notes / Context
+    -- Notes
     -- ==========================================================
 
     local note =
-    player.notes or ""
+        player.notes or ""
 
     if note == "" then
 
@@ -1314,52 +1503,101 @@ function UI:RefreshDetailCard()
         note
     )
 
+    -- Character
     -- ==========================================================
-    -- Historical Information
+
+    card.LastLevelText:SetText(
+        "Last Level: " ..
+        tostring(
+            player.lastSeenLevel or "-"
+        )
+    )
+
+    local roleText = "Unknown"
+
+    if player.lastSeenRole == "TANK" then
+
+        roleText =
+            "|cff6fa8dcTank|r"
+
+    elseif player.lastSeenRole == "HEALER" then
+
+        roleText =
+            "|cff93c47dHealer|r"
+
+    elseif player.lastSeenRole == "DAMAGER" then
+
+        roleText =
+            "|cfff6b26bDPS|r"
+
+    end
+
+    card.LastRoleText:SetText(
+        "Last Role: " ..
+        roleText
+    )
+
+
+    -- Rating
+    -- ==========================================================
+
+    local ratings =
+        addon.DB:GetRatings(
+            player.name
+        )
+
+    if #ratings == 0 then
+
+        card.CurrentRatingText:SetText(
+            "Current Rating: -"
+        )
+
+    else
+
+        card.CurrentRatingText:SetText(
+            string.format(
+                "Current Rating: %.1f",
+                addon.DB:GetAverageRating(
+                    player.name
+                )
+            )
+        )
+
+    end
+
+    local lastRating =
+        addon.DB:GetLastRating(
+            player.name
+        )
+
+    card.LastRatingText:SetText(
+        "Last Rating: " ..
+        tostring(
+            lastRating or "-"
+        )
+    )
+
+    -- History
     -- ==========================================================
 
     card.FirstSeenText:SetText(
-        "First Seen: " ..
+        "First Seen:\n" ..
         addon:FormatTimestamp(
             player.firstSeen
         )
     )
 
     card.LastSeenText:SetText(
-        "Last Seen: " ..
+        "Last Seen:\n" ..
         addon:FormatTimestamp(
             player.lastSeen
         )
     )
 
-    card.LastLevelText:SetText(
-        "Last Seen Level: " ..
+    card.RunsHistoryText:SetText(
+        "Runs Together:\n" ..
         tostring(
-            player.lastSeenLevel or 0
-        )
-    )
-
-    card.LastSpecText:SetText(
-        "Last Seen Spec: " ..
-        tostring(
-            player.lastSeenSpec or
-            "Unknown"
-        )
-    )
-
-    card.LastRatingText:SetText(
-        "Latest Rating: " ..
-        tostring(
-            addon.DB:GetLastRating(
-                player.name
-            )
-        )
-    )
-
-    card.RatingHistoryText:SetText(
-        "Rating History: " ..
-        addon.DB:GetRatingHistoryString(
-            player.name
+            player.runs or 0
         )
     )
 
@@ -1367,7 +1605,7 @@ function UI:RefreshDetailCard()
 
 end
 
--- ============================================================================
+
 -- Toggle Window
 -- ============================================================================
 
@@ -1393,4 +1631,3 @@ end
 
 -- ============================================================================
 -- End MainFrame.lua
--- ============================================================================
