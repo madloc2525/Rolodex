@@ -69,6 +69,25 @@ function addon:GROUP_ROSTER_UPDATE()
 
 end
 
+function Core:GetFullPlayerName(unit)
+
+    local firstName, lastName =
+        UnitName(unit)
+
+    if not firstName then
+        return nil
+    end
+
+    if lastName and lastName ~= "" then
+
+        return firstName .. " " .. lastName
+
+    end
+
+    return firstName
+
+end
+
 -- ============================================================================
 -- Group Scanner
 --
@@ -93,6 +112,8 @@ end
 -- ============================================================================
 
 function Core:ScanGroup()
+
+
 
     addon:DebugPrint(
         "Scanning group..."
@@ -135,7 +156,7 @@ function Core:ScanGroup()
         if UnitExists(unit) then
 
             local name =
-                UnitName(unit)
+                Core:GetFullPlayerName(unit)
 
             local _, class =
                 UnitClass(unit)
@@ -157,11 +178,14 @@ function Core:ScanGroup()
                 )
 
             end
-
         end
-
     end
+    if addon.UI
+    and addon.UI.MainFrame
+    and addon.UI.MainFrame:IsShown() then
 
+        addon.UI:RefreshPlayerList()
+    end
 end
 
 -- ============================================================================

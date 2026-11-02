@@ -235,13 +235,12 @@ SlashCmdList["ROLODEXCREATE"] = function(msg)
 end
 
 -- ============================================================================
--- Delete Player
+-- Delete Player / Wipe
 --
 -- Example:
---
 -- /rolodexdelete Tankadin
---
--- Development only.
+-- /rolodexwipe
+-- 
 --
 -- ============================================================================
 
@@ -268,6 +267,23 @@ SlashCmdList["ROLODEXDELETE"] = function(msg)
             name
         )
     )
+
+end
+
+SLASH_ROLODEXWIPE1 = "/rolodexwipe"
+
+SlashCmdList["ROLODEXWIPE"] = function()
+
+    RolodexDB.players = {}
+
+    Rolodex:Print(
+        "Rolodex database wiped."
+    )
+
+    if Rolodex.UI then
+        Rolodex.UI.SelectedPlayer = nil
+        Rolodex.UI:RefreshPlayerList()
+    end
 
 end
 

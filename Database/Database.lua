@@ -421,6 +421,28 @@ function DB:PlayerExists(name)
 
 end
 
+-- Get Players by First Name for Toolip
+function DB:GetPlayerByFirstName(firstName)
+
+    for _, player in pairs(RolodexDB.players) do
+
+        local storedFirstName =
+            string.match(
+                player.name,
+                "^[^ ]+"
+            )
+
+        if storedFirstName == firstName then
+            return player
+        end
+
+    end
+
+    return nil
+
+end
+
+
 -- 
 -- Debug (temp)
 -- ----------------------------------------------------------------------------------

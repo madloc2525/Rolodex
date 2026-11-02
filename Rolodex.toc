@@ -22,7 +22,7 @@ Database\Database.lua
 
 # UI\Theme.lua
 UI\MainFrame.lua
-
+UI\Tooltips.lua
 
 # UI\PlayerFrame.lua
 # UI\RatingPrompt.lua

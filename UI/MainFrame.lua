@@ -19,10 +19,24 @@ addon.UI = addon.UI or {}
 
 local UI = addon.UI
 
+-- Helpers
+-- ===========================================================================
+local function FormatClassName(class)
 
+    if not class then
+        return "Unknown"
+    end
 
+    class = string.lower(class)
+
+    return string.upper(
+        string.sub(class, 1, 1)
+    ) ..
+    string.sub(class, 2)
+
+end
 -- Currently selected player.
-UI.SelectedPlayer = nil
+UI.ExpandedPlayer = nil
 -- Sort
 UI.SortMode = "NAME"
 
@@ -33,6 +47,20 @@ UI.SortMode = "NAME"
 function UI:Initialize()
 
     self:CreateMainFrame()
+
+end
+
+-- Refresh entire UI
+-- ======================================================================
+
+function UI:Refresh()
+
+    if not self.MainFrame then
+        return
+    end
+
+    self:RefreshPlayerList()
+    self:RefreshDetailCard()
 
 end
 
@@ -49,14 +77,14 @@ function UI:CreatePlayerRow(parent, index)
         parent
     )
 
-    row:SetSize(350, 20)
+    row:SetSize(550, 20)
 
     row:SetPoint(
         "TOPLEFT",
         15,
         -40 - ((index - 1) * 22)
     )
-
+    -- Flag (Favorite, Avoid or nil)
     row.FlagText = row:CreateFontString(
     nil,
     "OVERLAY",
@@ -68,7 +96,7 @@ function UI:CreatePlayerRow(parent, index)
         5,
         0
     )
-
+    -- Name
     row.NameText = row:CreateFontString(
     nil,
     "OVERLAY",
@@ -80,7 +108,19 @@ function UI:CreatePlayerRow(parent, index)
         25,
         0
     )
+    -- Class
+    row.ClassText = row:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontNormal"
+    )
 
+    row.ClassText:SetPoint(
+        "LEFT",
+        180,
+        0
+    )
+    -- Guild
     row.GuildText = row:CreateFontString(
     nil,
     "OVERLAY",
@@ -89,10 +129,10 @@ function UI:CreatePlayerRow(parent, index)
 
     row.GuildText:SetPoint(
         "LEFT",
-        120,
+        260,
         0
     )
-
+    -- Rating
     row.RatingText = row:CreateFontString(
     nil,
     "OVERLAY",
@@ -101,10 +141,10 @@ function UI:CreatePlayerRow(parent, index)
 
     row.RatingText:SetPoint(
         "LEFT",
-        220,
+        400,
         0
     )
-
+    -- Runs together
     row.RunsText = row:CreateFontString(
     nil,
     "OVERLAY",
@@ -113,28 +153,82 @@ function UI:CreatePlayerRow(parent, index)
 
     row.RunsText:SetPoint(
         "LEFT",
-        270,
+        450,
         0
     )
-
-    row.NoteText = row:CreateFontString(
+    -- Note
+    row.NoteButton = CreateFrame(
+    "Button",
     nil,
-    "OVERLAY",
-    "GameFontNormal"
+    row
+)
+
+    row.NoteButton:SetSize(
+        20,
+        20
     )
 
-    row.NoteText:SetPoint(
+    row.NoteButton:SetPoint(
         "LEFT",
-        320,
+        500,
         0
     )
+
+    row.NoteButton.Text =
+        row.NoteButton:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontNormal"
+        )
+
+    row.NoteButton.Text:SetAllPoints()
+
+    row.NoteButton.Text:SetText("✎")
+
+    row.NoteButton:SetScript(
+    "OnClick",
+    function()
+
+        local player =
+            addon.DB:GetPlayer(
+                row.PlayerName
+            )
+
+        UI.NotePlayer =
+            row.PlayerName
+
+        UI.MainFrame.NotesFrame.Title:SetText(
+            "Notes - " ..
+            row.PlayerName
+        )
+
+        UI.MainFrame.NotesFrame.EditBox:SetText(
+            player.notes or ""
+        )
+
+        UI.MainFrame.NotesFrame:Show()
+
+        UI.MainFrame.NotesFrame.EditBox:SetFocus()
+
+    end
+)
+
 
     row:SetScript("OnClick", function()
 
-        UI.SelectedPlayer = row.PlayerName
+        if UI.ExpandedPlayer ==
+        row.PlayerName then
 
-        UI:RefreshPlayerList()
-        UI:RefreshDetailCard()
+            UI.ExpandedPlayer = nil
+
+        else
+
+            UI.ExpandedPlayer =
+                row.PlayerName
+
+        end
+
+        UI:Refresh()
 
     end)
 
@@ -143,7 +237,7 @@ function UI:CreatePlayerRow(parent, index)
 end
 
 
--- ============================================================================
+
 -- Main Frame Creation
 -- ============================================================================
 
@@ -156,7 +250,7 @@ function UI:CreateMainFrame()
         "BasicFrameTemplateWithInset"
     )
 
-    frame:SetSize(400, 500)
+    frame:SetSize(800, 500)
     frame:SetPoint("CENTER")
 
     frame:SetMovable(true)
@@ -222,15 +316,19 @@ function UI:CreateMainFrame()
 
             if UI.SortMode == "NAME" then
 
+                UI.SortMode = "CLASS"
+
+            elseif UI.SortMode == "CLASS" then
+
+                UI.SortMode = "GUILD"
+
+            elseif UI.SortMode == "GUILD" then
+
                 UI.SortMode = "RATING"
 
             elseif UI.SortMode == "RATING" then
 
                 UI.SortMode = "RUNS"
-
-            elseif UI.SortMode == "RUNS" then
-
-                UI.SortMode = "GUILD"
 
             else
 
@@ -242,7 +340,7 @@ function UI:CreateMainFrame()
                 "Sort: " .. UI.SortMode
             )
 
-            UI:RefreshPlayerList()
+            UI:Refresh()
 
         end
     )
@@ -261,11 +359,8 @@ function UI:CreateMainFrame()
 
     end
 
-        -- ==========================================================
-    -- Floating Detail Card
-    --
-    -- Appears beneath the selected row and overlays any rows
-    -- underneath it, mimicking a Rolodex card being pulled out.
+
+    -- Detail Card
     -- ==========================================================
 
     frame.DetailCard = CreateFrame(
@@ -286,7 +381,9 @@ function UI:CreateMainFrame()
 
     local card = frame.DetailCard
 
-    -- ==========================================================
+    card.CloseButton:Hide()
+
+
     -- CORE SECTION
     -- ==========================================================
 
@@ -495,6 +592,163 @@ function UI:CreateMainFrame()
         -5
     )
 
+    -- Note Frame Editor Window
+    -- ==========================================================
+
+    frame.NotesFrame = CreateFrame(
+        "Frame",
+        nil,
+        frame,
+        "BasicFrameTemplateWithInset"
+    )
+
+    frame.NotesFrame:SetSize(
+        400,
+        280
+    )
+
+    frame.NotesFrame:SetPoint(
+        "CENTER"
+    )
+
+    frame.NotesFrame:SetFrameStrata(
+        "DIALOG"
+    )
+
+    frame.NotesFrame:Hide()
+
+    local notesFrame =
+        frame.NotesFrame
+
+    -- Note FrameTitle
+    -- ==========================================================
+
+    notesFrame.Title =
+        notesFrame:CreateFontString(
+            nil,
+            "OVERLAY",
+            "GameFontHighlight"
+        )
+
+    notesFrame.Title:SetPoint(
+        "TOP",
+        0,
+        -10
+    )
+
+    notesFrame.Title:SetText(
+        "Player Notes"
+    )
+
+    -- Note Frame Scroll
+    -- ==========================================================
+
+    notesFrame.ScrollFrame =
+        CreateFrame(
+            "ScrollFrame",
+            nil,
+            notesFrame,
+            "UIPanelScrollFrameTemplate"
+        )
+
+    notesFrame.ScrollFrame:SetPoint(
+        "TOPLEFT",
+        15,
+        -35
+    )
+
+    notesFrame.ScrollFrame:SetPoint(
+        "BOTTOMRIGHT",
+        -30,
+        50
+    )
+
+    -- Note FrameEdit Box
+    -- ==========================================================
+
+    notesFrame.EditBox =
+        CreateFrame(
+            "EditBox",
+            nil,
+            notesFrame.ScrollFrame)
+    notesFrame.EditBox:SetMultiLine(true)
+    notesFrame.EditBox:SetFontObject(ChatFontNormal)
+    notesFrame.EditBox:SetAutoFocus(false)
+    notesFrame.EditBox:EnableMouse(true)
+    notesFrame.EditBox:SetWidth(320)
+    notesFrame.EditBox:SetText("")
+    notesFrame.ScrollFrame:SetScrollChild(
+        notesFrame.EditBox
+    )
+    -- Note Frame Save Button
+    -- ==========================================================
+
+    notesFrame.SaveButton =
+        CreateFrame(
+            "Button",
+            nil,
+            notesFrame,
+            "UIPanelButtonTemplate"
+        )
+
+    notesFrame.SaveButton:SetSize(
+        100,
+        22
+    )
+
+    notesFrame.SaveButton:SetPoint(
+        "BOTTOMLEFT",
+        80,
+        15
+    )
+
+    notesFrame.SaveButton:SetText(
+        "Save"
+    )
+
+    notesFrame.SaveButton:SetScript(
+    "OnClick",
+    function()
+
+        addon.DB:SetNote(
+            UI.NotePlayer,
+            notesFrame.EditBox:GetText()
+        )
+
+        UI:Refresh()
+
+        notesFrame:Hide()
+
+    end
+    )
+    -- Note Frame Cancel Button
+    -- ==========================================================
+
+    notesFrame.CancelButton =
+        CreateFrame(
+            "Button",
+            nil,
+            notesFrame,
+            "UIPanelButtonTemplate"
+        )
+
+    notesFrame.CancelButton:SetSize(
+        100,
+        22
+    )
+
+    notesFrame.CancelButton:SetPoint(
+        "BOTTOMRIGHT",
+        -80,
+        15
+    )
+
+    notesFrame.CancelButton:SetText(
+        "Cancel"
+    )
+
+
+
 end -- Close CreateMainFrame
 
 -- ============================================================================
@@ -532,6 +786,49 @@ function UI:RefreshPlayerList()
 
         end
     )
+
+    elseif self.SortMode == "CLASS" then
+
+        table.sort(
+            playerNames,
+            function(a, b)
+
+                local pa =
+                    addon.DB:GetPlayer(a)
+
+                local pb =
+                    addon.DB:GetPlayer(b)
+
+                local classA =
+                    FormatClassName(
+                        pa.class
+                    )
+
+                local classB =
+                    FormatClassName(
+                        pb.class
+                    )
+
+                -- Nulls last.
+                local emptyA =
+                    classA == "Unknown"
+
+                local emptyB =
+                    classB == "Unknown"
+
+                if emptyA ~= emptyB then
+                    return not emptyA
+                end
+
+                -- Tie-breaker.
+                if classA == classB then
+                    return a < b
+                end
+
+                return classA < classB
+
+            end
+        )
 
     elseif self.SortMode == "RATING" then
 
@@ -592,15 +889,6 @@ function UI:RefreshPlayerList()
 
     end
 
-    -- Auto-select first player if nothing selected.
-    if not self.SelectedPlayer
-    and #playerNames > 0 then
-
-        self.SelectedPlayer =
-            playerNames[1]
-
-    end
-
     -- Populate rows.
     for i, row in ipairs(
         self.MainFrame.Rows
@@ -619,7 +907,6 @@ function UI:RefreshPlayerList()
             row.PlayerName =
                 playerName
 
-            -- =====================================================
             -- Flag
             -- =====================================================
 
@@ -638,24 +925,43 @@ function UI:RefreshPlayerList()
             row.FlagText:SetText(
                 flag
             )
-
-            -- =====================================================
             -- Name
             -- =====================================================
 
             row.NameText:SetText(
                 player.name or ""
             )
-
+            -- Class
             -- =====================================================
+           
+            row.ClassText:SetText(
+                FormatClassName(
+                    player.class
+                )
+            )
+            local classColor =
+                RAID_CLASS_COLORS[
+                    player.class or ""
+                ]
+            if classColor then
+
+                row.ClassText:SetTextColor(
+                    classColor.r,
+                    classColor.g,
+                    classColor.b
+                )
+            else
+                row.ClassText:SetTextColor(
+                    1,
+                    1,
+                    1
+                )
+            end
             -- Guild
             -- =====================================================
-
             row.GuildText:SetText(
                 player.guild or "-"
             )
-
-            -- =====================================================
             -- Rating
             -- =====================================================
 
@@ -668,7 +974,7 @@ function UI:RefreshPlayerList()
                 )
             )
 
-            -- =====================================================
+
             -- Runs
             -- =====================================================
 
@@ -678,31 +984,30 @@ function UI:RefreshPlayerList()
                 )
             )
 
-            -- =====================================================
+
             -- Notes Indicator
             -- =====================================================
 
             if player.notes
-            and player.notes ~= "" then
+                and player.notes ~= "" then
 
-                row.NoteText:SetText(
-                    "📝"
-                )
+                    row.NoteButton:SetText(
+                        "📝"
+                    )
 
-            else
+                else
 
-                row.NoteText:SetText(
-                    ""
-                )
+                    row.NoteButton:SetText(
+                        ""
+                    )
 
-            end
+                end
 
-            -- =====================================================
             -- Highlight Selected Row
             -- =====================================================
 
             if playerName ==
-                self.SelectedPlayer then
+                self.ExpandedPlayer then
 
                 row.NameText:SetTextColor(
                     1,
@@ -741,7 +1046,7 @@ end
 
 function UI:RefreshDetailCard()
 
-    if not self.SelectedPlayer then
+    if not self.ExpandedPlayer then
 
         self.MainFrame.DetailCard:Hide()
 
@@ -751,7 +1056,7 @@ function UI:RefreshDetailCard()
 
     local player =
         addon.DB:GetPlayer(
-            self.SelectedPlayer
+            self.ExpandedPlayer
         )
 
     if not player then
@@ -769,10 +1074,9 @@ function UI:RefreshDetailCard()
     ) do
 
         if row.PlayerName ==
-            self.SelectedPlayer then
+            self.ExpandedPlayer then
 
             selectedRow = row
-
             break
 
         end
@@ -808,9 +1112,18 @@ function UI:RefreshDetailCard()
     -- Notes / Context
     -- ==========================================================
 
+    local note =
+    player.notes or ""
+
+    if note == "" then
+
+        note = "No notes recorded."
+
+    end
+
     card.NotesText:SetText(
-        "Notes:\n" ..
-        (player.notes or "")
+        "Notes:\n\n" ..
+        note
     )
 
     -- ==========================================================
@@ -882,8 +1195,7 @@ function UI:ToggleMainFrame()
 
     else
 
-        self:RefreshPlayerList()
-        self:RefreshDetailCard()
+        self:Refresh()
 
         self.MainFrame:Show()
 
