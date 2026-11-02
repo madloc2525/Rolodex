@@ -39,7 +39,7 @@ function DB:Initialize()
     -- Main player storage.
     RolodexDB.players = RolodexDB.players or {}
 
-    addon:Print("Database initialized.")
+    addon:DebugPrint("Database initialized.")
 
 end
 
@@ -452,15 +452,15 @@ function DB:DebugPlayer(name)
     local player = self:GetPlayer(name)
 
     if not player then
-        addon:Print("Player not found.")
+        addon:DebugPrint("Player not found.")
         return
     end
 
-    addon:Print("Name: " .. player.name)
-    addon:Print("Runs: " .. player.runs)
-    addon:Print("Average Rating: " .. string.format("%.2f", self:GetAverageRating(name)))
-    addon:Print("Favorite: " .. tostring(player.favorite))
-    addon:Print("Avoid: " .. tostring(player.avoid))
+    addon:DebugPrint("Name: " .. player.name)
+    addon:DebugPrint("Runs: " .. player.runs)
+    addon:DebugPrint("Average Rating: " .. string.format("%.2f", self:GetAverageRating(name)))
+    addon:DebugPrint("Favorite: " .. tostring(player.favorite))
+    addon:DebugPrint("Avoid: " .. tostring(player.avoid))
 
 end
 

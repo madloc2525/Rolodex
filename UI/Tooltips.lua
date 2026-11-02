@@ -73,30 +73,67 @@ TooltipDataProcessor.AddTooltipPostCall(
 
         tooltip:AddLine(" ")
 
-        tooltip:AddLine(
-            "Rolodex",
-            1.0,
-            0.82,
-            0.0
-        )
-
-        tooltip:AddLine(
+        local ratingText =
             string.format(
-                "Rating: %.2f",
+                "Rating: %.1f",
                 addon.DB:GetAverageRating(
                     player.name
                 )
             )
-        )
 
-        tooltip:AddLine(
-            "Runs: " ..
-            tostring(
-                player.runs or 0
+        if player.favorite then
+
+            ratingText =
+                ratingText ..
+                " (★)"
+
+        elseif player.avoid then
+
+            ratingText =
+                ratingText ..
+                " (⚠)"
+
+        end
+
+        if player.favorite then
+
+            tooltip:AddLine(
+                ratingText,
+                1,
+                1,
+                0
             )
-        )
+
+        elseif player.avoid then
+
+            tooltip:AddLine(
+                ratingText,
+                1,
+                0.25,
+                0.25
+            )
+
+        else
+
+            tooltip:AddLine(
+                ratingText,
+                1,
+                1,
+                1
+            )
+
+        end
+
+            tooltip:AddLine(
+                "Runs: " ..
+                tostring(player.runs or 0),
+                1,
+                1,
+                1
+            )
+
             if player.notes
-        and player.notes ~= "" then
+            and player.notes ~= "" then
 
             tooltip:AddLine(" ")
 

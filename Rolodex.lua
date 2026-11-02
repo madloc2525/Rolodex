@@ -80,26 +80,17 @@ end
 
 -- Development helper.
 --
--- temp space
+-- temp space/temp debugging
 --
-Rolodex.Debug = true
+Rolodex.DebugEnabled = false
 
 function Rolodex:DebugPrint(...)
 
-    if not self.Debug then
+    if not self.DebugEnabled then
         return
     end
 
-    local parts = {}
-
-    for i = 1, select("#", ...) do
-        parts[#parts + 1] = tostring(select(i, ...))
-    end
-
-    self:Print(
-        "|cffffaa00DEBUG:|r " ..
-        table.concat(parts, " ")
-    )
+    self:Print(...)
 
 end
 

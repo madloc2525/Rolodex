@@ -28,11 +28,12 @@ local addon = Rolodex
 -- Main Command
 -- ============================================================================
 
+
 SLASH_ROLODEX1 = "/rolodex"
 
 SlashCmdList["ROLODEX"] = function()
 
-    addon:Print("Rolodex command received.")
+    addon:DebugPrint("Rolodex command received.")
 
     -- UI will eventually hook into this.
     if addon.UI and addon.UI.ToggleMainFrame then
@@ -46,7 +47,7 @@ SlashCmdList["ROLODEX"] = function()
 
     else
 
-        addon:Print("UI unavailable.")
+        addon:DebugPrint("UI unavailable.")
 
     end
 
@@ -60,7 +61,7 @@ SLASH_ROLODEXTEST1 = "/rolodextest"
 
 SlashCmdList["ROLODEXTEST"] = function()
 
-    addon:Print("Creating test player...")
+    addon:DebugPrint("Creating test player...")
 
     addon.DB:CreatePlayer("Tankadin")
 
@@ -95,7 +96,7 @@ SlashCmdList["ROLODEXTEST"] = function()
         "Tankadin"
     )
 
-    addon:Print("Test player created.")
+    addon:DebugPrint("Test player created.")
 
 end
 
@@ -117,7 +118,7 @@ SlashCmdList["ROLODEXSHOW"] = function(msg)
 
     if not player then
 
-        addon:Print(
+        addon:DebugPrint(
             string.format(
                 "Player '%s' not found.",
                 name
@@ -127,36 +128,36 @@ SlashCmdList["ROLODEXSHOW"] = function(msg)
         return
     end
 
-    addon:Print("----------------------")
-    addon:Print("Player: " .. player.name)
-    addon:Print("Class: " .. player.class)
-    addon:Print("Guild: " .. player.guild)
-    addon:Print("Level: " .. player.level)
-    addon:Print("Runs: " .. player.runs)
+    addon:DebugPrint("----------------------")
+    addon:DebugPrint("Player: " .. player.name)
+    addon:DebugPrint("Class: " .. player.class)
+    addon:DebugPrint("Guild: " .. player.guild)
+    addon:DebugPrint("Level: " .. player.level)
+    addon:DebugPrint("Runs: " .. player.runs)
 
-    addon:Print(
+    addon:DebugPrint(
         string.format(
             "Average Rating: %.2f",
             addon.DB:GetAverageRating(name)
         )
     )
 
-    addon:Print(
+    addon:DebugPrint(
         "Favorite: " ..
         tostring(player.favorite)
     )
 
-    addon:Print(
+    addon:DebugPrint(
         "Avoid: " ..
         tostring(player.avoid)
     )
 
-    addon:Print(
+    addon:DebugPrint(
         "Note: " ..
         (player.notes or "")
     )
 
-    addon:Print("----------------------")
+    addon:DebugPrint("----------------------")
 
 end
 
@@ -170,7 +171,7 @@ SlashCmdList["ROLODEXCOUNT"] = function()
 
     local count = addon.DB:GetPlayerCount()
 
-    addon:Print(
+    addon:DebugPrint(
         string.format(
             "Database contains %d player(s).",
             count
@@ -180,20 +181,44 @@ SlashCmdList["ROLODEXCOUNT"] = function()
 end
 
 -- ============================================================================
--- Debug Dump
+-- Debug Mode
 -- ============================================================================
 
 SLASH_ROLODEXDEBUG1 = "/rolodexdebug"
 
-SlashCmdList["ROLODEXDEBUG"] = function(msg)
+SlashCmdList["ROLODEXDEBUG"] = function()
 
-    local name = strtrim(msg or "")
+    Rolodex.DebugEnabled =
+        not Rolodex.DebugEnabled
 
-    if name == "" then
-        name = "Tankadin"
-    end
+    Rolodex:Print(
+        "Debug: " ..
+        tostring(Rolodex.DebugEnabled)
+    )
 
-    addon.DB:DebugPlayer(name)
+end
+
+-- temp debug code ============================================================================
+SLASH_TESTFAVORITE1 = "/testfavorite"
+
+SlashCmdList["TESTFAVORITE"] = function()
+
+    addon.DB:SetFavorite(
+        "Velysse Dawnmere",
+        true
+    )
+
+    local player =
+        addon.DB:GetPlayer(
+            "Velysse Dawnmere"
+        )
+
+    print(
+        "TEST:",
+        player.favorite
+    )
+
+    addon.UI:Refresh()
 
 end
 
@@ -216,7 +241,7 @@ SlashCmdList["ROLODEXCREATE"] = function(msg)
 
     if name == "" then
 
-        addon:Print(
+        addon:DebugPrint(
             "Usage: /rolodexcreate PlayerName"
         )
 
@@ -225,7 +250,7 @@ SlashCmdList["ROLODEXCREATE"] = function(msg)
 
     local player = addon.DB:CreatePlayer(name)
 
-    addon:Print(
+    addon:DebugPrint(
         string.format(
             "Created player '%s'.",
             player.name
@@ -252,7 +277,7 @@ SlashCmdList["ROLODEXDELETE"] = function(msg)
 
     if name == "" then
 
-        addon:Print(
+        addon:DebugPrint(
             "Usage: /rolodexdelete PlayerName"
         )
 
@@ -261,7 +286,7 @@ SlashCmdList["ROLODEXDELETE"] = function(msg)
 
     addon.DB:DeletePlayer(name)
 
-    addon:Print(
+    addon:DebugPrint(
         string.format(
             "Deleted player '%s'.",
             name
@@ -276,7 +301,7 @@ SlashCmdList["ROLODEXWIPE"] = function()
 
     RolodexDB.players = {}
 
-    Rolodex:Print(
+    Rolodex:DebugPrint(
         "Rolodex database wiped."
     )
 

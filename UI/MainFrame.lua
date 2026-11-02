@@ -96,6 +96,88 @@ function UI:CreatePlayerRow(parent, index)
         5,
         0
     )
+    -- Flag toggle button
+        row.FlagButton = CreateFrame(
+        "Button",
+        nil,
+        row
+    )
+
+    row.FlagButton:SetSize(
+        20,
+        20
+    )
+
+    row.FlagButton:SetPoint(
+        "CENTER",
+        row.FlagText,
+        "CENTER",
+        0,
+        0
+    )
+    row.FlagButton = CreateFrame(
+    "Button",
+    nil,
+    row
+    )
+
+    row.FlagButton:SetSize(
+        20,
+        20
+    )
+
+    row.FlagButton:SetPoint(
+        "CENTER",
+        row.FlagText,
+        "CENTER",
+        0,
+        0
+    )
+    row.FlagButton:SetScript(
+    "OnClick",
+        function()
+
+            local player =
+                addon.DB:GetPlayer(
+                    row.PlayerName
+                )
+
+            if not player then
+                return
+            end
+
+            if player.favorite then
+
+                addon.DB:SetFavorite(
+                    row.PlayerName,
+                    false
+                )
+
+                addon.DB:SetAvoid(
+                    row.PlayerName,
+                    true
+                )
+
+            elseif player.avoid then
+
+                addon.DB:SetAvoid(
+                    row.PlayerName,
+                    false
+                )
+
+            else
+
+                addon.DB:SetFavorite(
+                    row.PlayerName,
+                    true
+                )
+
+            end
+
+            UI:Refresh()
+
+        end
+    )
     -- Name
     row.NameText = row:CreateFontString(
     nil,
@@ -383,6 +465,83 @@ function UI:CreateMainFrame()
 
     card.CloseButton:Hide()
 
+    card.FavoriteButton = CreateFrame(
+    "Button",
+    nil,
+    card,
+    "UIPanelButtonTemplate"
+    )
+
+    card.FavoriteButton:SetSize(100, 22)
+
+    card.FavoriteButton:SetText("★ Favorite")
+
+    card.AvoidButton = CreateFrame(
+    "Button",
+    nil,
+    card,
+    "UIPanelButtonTemplate"
+    )
+
+    card.AvoidButton:SetSize(100, 22)
+
+    card.AvoidButton:SetText("⚠ Avoid")
+
+    card.FavoriteButton:SetScript(
+    "OnClick",
+    function()
+
+        local current =
+            addon.DB:IsFavorite(
+                UI.SelectedPlayer
+            )
+
+        addon.DB:SetFavorite(
+            UI.SelectedPlayer,
+            not current
+        )
+
+        if not current then
+
+            addon.DB:SetAvoid(
+                UI.SelectedPlayer,
+                false
+            )
+
+        end
+
+        UI:Refresh()
+
+    end
+    )
+
+    card.AvoidButton:SetScript(
+    "OnClick",
+    function()
+
+        local current =
+            addon.DB:IsAvoided(
+                UI.SelectedPlayer
+            )
+
+        addon.DB:SetAvoid(
+            UI.SelectedPlayer,
+            not current
+        )
+
+        if not current then
+
+            addon.DB:SetFavorite(
+                UI.SelectedPlayer,
+                false
+            )
+
+        end
+
+        UI:Refresh()
+
+    end
+    )
 
     -- CORE SECTION
     -- ==========================================================
@@ -903,28 +1062,57 @@ function UI:RefreshPlayerList()
                 addon.DB:GetPlayer(
                     playerName
                 )
+            
+            print(
+                "FLAG DEBUG:",
+                playerName,
+                "favorite=",
+                tostring(player.favorite),
+                "avoid=",
+                tostring(player.avoid)
+            )    
 
             row.PlayerName =
                 playerName
-
-            -- Flag
+            
+            
+                    
+            
+                -- Flag
             -- =====================================================
-
-            local flag = ""
+                row.FlagText:SetText("★")
 
             if player.favorite then
 
-                flag = "★"
+                row.FlagText:SetText("★")
+
+                row.FlagText:SetTextColor(
+                    1,
+                    1,
+                    0
+                )
 
             elseif player.avoid then
 
-                flag = "⚠"
+                row.FlagText:SetText("⚠")
 
-            end
+                row.FlagText:SetTextColor(
+                    1,
+                    0.2,
+                    0.2
+                )
 
-            row.FlagText:SetText(
-                flag
-            )
+            else
+
+                row.FlagText:SetText("·")
+
+                row.FlagText:SetTextColor(
+                    0.5,
+                    0.5,
+                    0.5
+                )
+
+            end    
             -- Name
             -- =====================================================
 

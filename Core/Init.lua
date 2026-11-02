@@ -2,7 +2,7 @@ local addon = Rolodex
 
 function addon.Core:Initialize()
 
-    addon:Print(
+    addon:DebugPrint(
         "Core initialized."
     )
 
