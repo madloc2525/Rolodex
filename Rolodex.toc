@@ -20,12 +20,13 @@ Database\Database.lua
 
 
 
-# UI\Theme.lua
+UI\Theme.lua
+UI\BusinessCard.lua
+UI\DetailCard.lua
 UI\MainFrame.lua
 UI\Tooltips.lua
 
-# UI\PlayerFrame.lua
-# UI\RatingPrompt.lua
+UI\RatingPrompt.lua
 # UI\Widgets.lua
 
 

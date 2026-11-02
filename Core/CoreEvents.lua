@@ -14,7 +14,6 @@
 --
 -- - Session tracking.
 -- - Run history.
--- - Dungeon detection (instance detection)
 -- - Queue rating prompts.
 --
 -- ============================================================================
@@ -24,6 +23,11 @@ local addon = Rolodex
 addon.Core = addon.Core or {}
 
 local Core = addon.Core
+
+addon.ActiveSession =
+    addon.ActiveSession or {}
+
+addon.WasGrouped = false
 
 -- ============================================================================
 -- Event Registration
@@ -65,6 +69,39 @@ function addon:GROUP_ROSTER_UPDATE()
         "GROUP_ROSTER_UPDATE"
     )
 
+    local grouped =
+        IsInGroup()
+        or
+        IsInRaid()
+
+
+    -- Session End Detection
+
+
+    if addon.WasGrouped
+    and not grouped then
+
+        addon:DebugPrint(
+            "Session ended."
+        )
+
+        if addon.UI
+        and addon.UI.RatingPrompt
+        and addon.UI.RatingPrompt.Show then
+
+            addon.UI.RatingPrompt:Show()
+
+        end
+
+    end
+
+
+    -- Update Session End State
+
+
+    addon.WasGrouped =
+        grouped
+
     Core:ScanGroup()
 
 end
@@ -87,6 +124,8 @@ function Core:GetFullPlayerName(unit)
     return firstName
 
 end
+
+
 
 -- ============================================================================
 -- Group Scanner
@@ -188,6 +227,14 @@ function Core:ScanGroup()
                     name,
                     role
                 )
+                addon.ActiveSession =
+                    addon.ActiveSession or {}
+
+                addon.ActiveSession[name] = {
+                    class= class,
+                    role = role,
+                }
+                
 
                 addon:DebugPrint(
                     "CHARACTER: " ..

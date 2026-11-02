@@ -21,20 +21,7 @@ local UI = addon.UI
 
 -- Helpers
 -- ===========================================================================
-local function FormatClassName(class)
 
-    if not class then
-        return "Unknown"
-    end
-
-    class = string.lower(class)
-
-    return string.upper(
-        string.sub(class, 1, 1)
-    ) ..
-    string.sub(class, 2)
-
-end
 -- Currently selected player.
 UI.ExpandedPlayer = nil
 -- Sort
@@ -65,262 +52,7 @@ function UI:Refresh()
 end
 
 
--- ============================================================================
--- Create Player Row
--- ============================================================================
-
-function UI:CreatePlayerRow(parent, index)
-
-    local row = CreateFrame(
-        "Button",
-        nil,
-        parent
-    )
-
-    row:SetSize(550, 20)
-
-    row:SetPoint(
-        "TOPLEFT",
-        15,
-        -40 - ((index - 1) * 22)
-    )
-    -- Flag (Favorite, Avoid or nil)
-    row.FlagText = row:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontNormal"
-    )
-
-    row.FlagText:SetPoint(
-        "LEFT",
-        5,
-        0
-    )
-    -- Flag toggle button
-        row.FlagButton = CreateFrame(
-        "Button",
-        nil,
-        row
-    )
-
-    row.FlagButton:SetSize(
-        20,
-        20
-    )
-
-    row.FlagButton:SetPoint(
-        "CENTER",
-        row.FlagText,
-        "CENTER",
-        0,
-        0
-    )
-    row.FlagButton = CreateFrame(
-    "Button",
-    nil,
-    row
-    )
-
-    row.FlagButton:SetSize(
-        20,
-        20
-    )
-
-    row.FlagButton:SetPoint(
-        "CENTER",
-        row.FlagText,
-        "CENTER",
-        0,
-        0
-    )
-    row.FlagButton:SetScript(
-    "OnClick",
-        function()
-
-            local player =
-                addon.DB:GetPlayer(
-                    row.PlayerName
-                )
-
-            if not player then
-                return
-            end
-
-            if player.favorite then
-
-                addon.DB:SetFavorite(
-                    row.PlayerName,
-                    false
-                )
-
-                addon.DB:SetAvoid(
-                    row.PlayerName,
-                    true
-                )
-
-            elseif player.avoid then
-
-                addon.DB:SetAvoid(
-                    row.PlayerName,
-                    false
-                )
-
-            else
-
-                addon.DB:SetFavorite(
-                    row.PlayerName,
-                    true
-                )
-
-            end
-
-            UI:Refresh()
-
-        end
-    )
-    -- Name
-    row.NameText = row:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontNormal"
-    )
-
-    row.NameText:SetPoint(
-        "LEFT",
-        25,
-        0
-    )
-    -- Class
-    row.ClassText = row:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    row.ClassText:SetPoint(
-        "LEFT",
-        180,
-        0
-    )
-    -- Guild
-    row.GuildText = row:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontNormalSmall"
-    )
-
-    row.GuildText:SetPoint(
-        "LEFT",
-        260,
-        0
-    )
-    -- Rating
-    row.RatingText = row:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontNormal"
-    )
-
-    row.RatingText:SetPoint(
-        "LEFT",
-        400,
-        0
-    )
-    -- Runs together
-    row.RunsText = row:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontNormal"
-    )
-
-    row.RunsText:SetPoint(
-        "LEFT",
-        450,
-        0
-    )
-    -- Note
-    row.NoteButton = CreateFrame(
-    "Button",
-    nil,
-    row
-)
-
-    row.NoteButton:SetSize(
-        20,
-        20
-    )
-
-    row.NoteButton:SetPoint(
-        "LEFT",
-        500,
-        0
-    )
-
-    row.NoteButton.Text =
-        row.NoteButton:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    row.NoteButton.Text:SetAllPoints()
-
-    row.NoteButton.Text:SetText("✎")
-
-    row.NoteButton:SetScript(
-    "OnClick",
-    function()
-
-        local player =
-            addon.DB:GetPlayer(
-                row.PlayerName
-            )
-
-        UI.NotePlayer =
-            row.PlayerName
-
-        UI.MainFrame.NotesFrame.Title:SetText(
-            "Notes - " ..
-            row.PlayerName
-        )
-
-        UI.MainFrame.NotesFrame.EditBox:SetText(
-            player.notes or ""
-        )
-
-        UI.MainFrame.NotesFrame:Show()
-
-        UI.MainFrame.NotesFrame.EditBox:SetFocus()
-
-    end
-)
-
-
-    row:SetScript("OnClick", function()
-
-        if UI.ExpandedPlayer ==
-        row.PlayerName then
-
-            UI.ExpandedPlayer = nil
-
-        else
-
-            UI.ExpandedPlayer =
-                row.PlayerName
-
-        end
-
-        UI:Refresh()
-
-    end)
-
-    return row
-
-end
-
-
-
--- Main Frame Creation
+-- Create Main Frame
 -- ============================================================================
 
 function UI:CreateMainFrame()
@@ -427,529 +159,90 @@ function UI:CreateMainFrame()
         end
     )
 
-    -- Player Rows
-    -- ==========================================================
+-- Player Rows
+-- ==========================================================
 
-    frame.Rows = {}
+frame.ScrollFrame =
+    CreateFrame(
+        "ScrollFrame",
+        nil,
+        frame,
+        "UIPanelScrollFrameTemplate"
+    )
 
-    for i = 1, 20 do
+frame.ScrollFrame:SetPoint(
+    "TOPLEFT",
+    10,
+    -60
+)
 
-        frame.Rows[i] = self:CreatePlayerRow(
-            frame,
+frame.ScrollFrame:SetSize(
+    780,
+    400
+)
+
+frame.ScrollFrame:EnableMouseWheel(true)
+
+frame.ScrollFrame:SetScript(
+    "OnMouseWheel",
+    function(_, delta)
+
+        local current =
+            frame.ScrollFrame:GetVerticalScroll()
+
+        frame.ScrollFrame:SetVerticalScroll(
+            math.max(
+                0,
+                current - (delta * 20)
+            )
+        )
+
+        UI.ExpandedPlayer = nil
+
+        UI: Refresh()
+
+    end
+)
+
+-- Content Frame
+
+frame.ScrollChild =
+    CreateFrame(
+        "Frame",
+        nil,
+        frame.ScrollFrame
+    )
+
+frame.ScrollChild:SetSize(
+    760,
+    2400
+)
+
+frame.ScrollFrame:SetScrollChild(
+    frame.ScrollChild
+)
+
+-- Player Rows
+
+frame.Rows = {}
+
+for i = 1, 100 do
+
+    frame.Rows[i] =
+        addon.UI.BusinessCard:Create(
+            frame.ScrollChild,
             i
         )
 
-    end
+end
 
+-- Detail Card
 
-    -- Detail Card
-    -- ==========================================================
-
-    frame.DetailCard = CreateFrame(
-        "Frame",
-        nil,
-        frame,
-        "BasicFrameTemplateWithInset"
+frame.DetailCard =
+    addon.UI.DetailCard:Create(
+        frame
     )
 
-    frame.DetailCard:SetSize(600, 250)
-
-    frame.DetailCard:SetFrameStrata("HIGH")
-    frame.DetailCard:SetFrameLevel(100)
-
-    frame.DetailCard:Hide()
-
-    -- Position is set dynamically in RefreshDetailCard().
-
-    local card = frame.DetailCard
-
-    card.CloseButton:Hide()
-
-    card.FavoriteButton = CreateFrame(
-    "Button",
-    nil,
-    card,
-    "UIPanelButtonTemplate"
-    )
-
-    card.FavoriteButton:SetSize(100, 22)
-
-    card.FavoriteButton:SetText("★ Favorite")
-
-    card.AvoidButton = CreateFrame(
-    "Button",
-    nil,
-    card,
-    "UIPanelButtonTemplate"
-    )
-
-    card.AvoidButton:SetSize(100, 22)
-
-    card.AvoidButton:SetText("⚠ Avoid")
-
-    card.FavoriteButton:SetScript(
-    "OnClick",
-    function()
-
-        local current =
-            addon.DB:IsFavorite(
-                UI.SelectedPlayer
-            )
-
-        addon.DB:SetFavorite(
-            UI.SelectedPlayer,
-            not current
-        )
-
-        if not current then
-
-            addon.DB:SetAvoid(
-                UI.SelectedPlayer,
-                false
-            )
-
-        end
-
-        UI:Refresh()
-
-    end
-    )
-
-    card.AvoidButton:SetScript(
-    "OnClick",
-    function()
-
-        local current =
-            addon.DB:IsAvoided(
-                UI.SelectedPlayer
-            )
-
-        addon.DB:SetAvoid(
-            UI.SelectedPlayer,
-            not current
-        )
-
-        if not current then
-
-            addon.DB:SetFavorite(
-                UI.SelectedPlayer,
-                false
-            )
-
-        end
-
-        UI:Refresh()
-
-    end
-    )
-
-    -- CORE SECTION
-    -- ==========================================================
-
-    card.NameText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontHighlight"
-    )
-
-    card.NameText:SetPoint(
-        "TOPLEFT",
-        10,
-        -30
-    )
-
-    card.ClassText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    card.ClassText:SetPoint(
-        "TOPLEFT",
-        card.NameText,
-        "BOTTOMLEFT",
-        0,
-        -5
-    )
-
-    card.GuildText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    card.GuildText:SetPoint(
-        "TOPLEFT",
-        card.ClassText,
-        "BOTTOMLEFT",
-        0,
-        -5
-    )
-
-    card.RatingText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    card.RatingText:SetPoint(
-        "TOPLEFT",
-        card.GuildText,
-        "BOTTOMLEFT",
-        0,
-        -5
-    )
-
-    card.RunsText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-    )
-
-    card.RunsText:SetPoint(
-        "TOPLEFT",
-        card.RatingText,
-        "BOTTOMLEFT",
-        0,
-        -5
-    )
-
-    card.NotesText = card:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormalSmall"
-    )
-
-    card.NotesText:SetWidth(300)
-    card.NotesText:SetJustifyH("LEFT")
-
-    card.NotesText:SetPoint(
-        "TOPLEFT",
-        card.RunsText,
-        "BOTTOMLEFT",
-        0,
-        -8
-    )
-
-    -- ==========================================================
-    -- Divider
-    -- ==========================================================
-
-    card.Divider = card:CreateTexture(
-        nil,
-        "ARTWORK"
-    )
-
-    card.Divider:SetColorTexture(
-        0.4,
-        0.4,
-        0.4,
-        1
-    )
-
-    card.Divider:SetSize(
-        300,
-        1
-    )
-
-    card.Divider:SetPoint(
-        "TOPLEFT",
-        card.NotesText,
-        "BOTTOMLEFT",
-        0,
-        -10
-    )
-
-    -- ==========================================================
-    -- Detail Cards columns (rating and historical)
-    -- ==========================================================
-
-    card.CharacterHeader =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontHighlight"
-        )
-
-    card.CharacterHeader:SetPoint(
-        "TOPLEFT",
-        card.Divider,
-        "BOTTOMLEFT",
-        0,
-        -10
-    )
-
-    card.CharacterHeader:SetText(
-        "Character"
-    )
-
-    card.LastLevelText =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    card.LastLevelText:SetPoint(
-        "TOPLEFT",
-        card.CharacterHeader,
-        "BOTTOMLEFT",
-        0,
-        -10
-    )
-
-    card.LastRoleText =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    card.LastRoleText:SetPoint(
-            "TOPLEFT",
-            card.LastLevelText,
-            "BOTTOMLEFT",
-            0,
-            -12
-    )
--- ==========================================================
--- RATING COLUMN
--- ==========================================================
-
-    card.RatingHeader =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontHighlight"
-        )
-
-    card.RatingHeader:SetPoint(
-        "TOPLEFT",
-        card.Divider,
-        "BOTTOMLEFT",
-        120,
-        0
-    )
-
-    card.RatingHeader:SetText(
-        "Rating"
-    )
-
-    card.CurrentRatingText =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    card.CurrentRatingText:SetPoint(
-        "TOPLEFT",
-        card.RatingHeader,
-        "BOTTOMLEFT",
-        0,
-        -10
-    )
-
--- Rating Buttons
--- ==========================================================
-
-        card.Rating1Button =
-            CreateFrame(
-                "Button",
-                nil,
-                card,
-                "UIPanelButtonTemplate"
-            )
-
-        card.Rating1Button:SetSize(
-            25,
-            20
-        )
-
-        card.Rating1Button:SetPoint(
-            "TOPLEFT",
-            card.CurrentRatingText,
-            "BOTTOMLEFT",
-            0,
-            -10
-        )
-
-        card.Rating1Button:SetText("1")
-
-
-        card.Rating2Button =
-            CreateFrame(
-                "Button",
-                nil,
-                card,
-                "UIPanelButtonTemplate"
-            )
-
-        card.Rating2Button:SetSize(
-            25,
-            20
-        )
-
-        card.Rating2Button:SetPoint(
-            "LEFT",
-            card.Rating1Button,
-            "RIGHT",
-            5,
-            0
-        )
-
-        card.Rating2Button:SetText("2")
-
-
-        card.Rating3Button =
-            CreateFrame(
-                "Button",
-                nil,
-                card,
-                "UIPanelButtonTemplate"
-            )
-
-        card.Rating3Button:SetSize(
-            25,
-            20
-        )
-
-        card.Rating3Button:SetPoint(
-            "LEFT",
-            card.Rating2Button,
-            "RIGHT",
-            5,
-            0
-        )
-
-        card.Rating3Button:SetText("3")
-
-
-
-    card.LastRatingText =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    card.LastRatingText:SetPoint(
-            "TOPLEFT",
-            card.Rating1Button,
-            "BOTTOMLEFT",
-            0,
-            -10
-        )
-
-        card.Rating1Button:SetScript(
-    "OnClick",
-    function()
-
-        addon.DB:AddRating(
-            UI.ExpandedPlayer,
-            1
-        )
-
-        UI:Refresh()
-
-    end
-    )
-
-    card.Rating2Button:SetScript(
-        "OnClick",
-        function()
-
-            addon.DB:AddRating(
-                UI.ExpandedPlayer,
-                2
-            )
-
-            UI:Refresh()
-
-        end
-    )
-
-    card.Rating3Button:SetScript(
-        "OnClick",
-        function()     
-
-            addon.DB:AddRating(
-                UI.ExpandedPlayer,
-                3
-            )
-
-            UI:Refresh()
-
-        end
-    )
-
--- ==========================================================
--- HISTORY COLUMN
--- ==========================================================
-
-    card.HistoryHeader =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontHighlight"
-        )
-
-    card.HistoryHeader:SetPoint(
-        "TOPLEFT",
-        card.RatingHeader,
-        "TOPRIGHT",
-        120,
-        0
-    )
-
-    card.HistoryHeader:SetText(
-        "History"
-    )
-
-    card.FirstSeenText =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    card.FirstSeenText:SetPoint(
-        "TOPLEFT",
-        card.HistoryHeader,
-        "BOTTOMLEFT",
-        0,
-        -10
-    )
-
-    card.LastSeenText =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    card.LastSeenText:SetPoint(
-            "TOPLEFT",
-            card.FirstSeenText,
-            "BOTTOMLEFT",
-            0,
-            -12
-    )
-
-    card.RunsHistoryText =
-        card:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    card.RunsHistoryText:SetPoint(
-            "TOPLEFT",
-            card.LastSeenText,
-            "BOTTOMLEFT",
-            0,
-            -12
-    )
 
     -- Note Frame Editor Window
     -- ==========================================================
@@ -1159,12 +452,12 @@ function UI:RefreshPlayerList()
                     addon.DB:GetPlayer(b)
 
                 local classA =
-                    FormatClassName(
+                    addon.UI.Theme:FormatClassName(
                         pa.class
                     )
 
                 local classB =
-                    FormatClassName(
+                    addon.UI.Theme:FormatClassName(
                         pb.class
                     )
 
@@ -1248,6 +541,16 @@ function UI:RefreshPlayerList()
 
     end
 
+    local contentHeight =
+        math.max(
+            400,
+            (#playerNames * 22) + 20
+        )
+
+    self.MainFrame.ScrollChild:SetHeight(
+        contentHeight
+    )
+
     -- Populate rows.
     for i, row in ipairs(
         self.MainFrame.Rows
@@ -1264,145 +567,13 @@ function UI:RefreshPlayerList()
                 )  
 
             row.PlayerName =
+                playerName          
+
+            addon.UI.BusinessCard:Refresh(
+                row,
+                player,
                 playerName
-            
-            
-                    
-            
-                -- Flag
-            -- =====================================================
-                row.FlagText:SetText("★")
-
-            if player.favorite then
-
-                row.FlagText:SetText("★")
-
-                row.FlagText:SetTextColor(
-                    1,
-                    1,
-                    0
-                )
-
-            elseif player.avoid then
-
-                row.FlagText:SetText("⚠")
-
-                row.FlagText:SetTextColor(
-                    1,
-                    0.2,
-                    0.2
-                )
-
-            else
-
-                row.FlagText:SetText("·")
-
-                row.FlagText:SetTextColor(
-                    0.5,
-                    0.5,
-                    0.5
-                )
-
-            end    
-            -- Name
-            -- =====================================================
-
-            row.NameText:SetText(
-                player.name or ""
             )
-            -- Class
-            -- =====================================================
-           
-            row.ClassText:SetText(
-                FormatClassName(
-                    player.class
-                )
-            )
-            local classColor =
-                RAID_CLASS_COLORS[
-                    player.class or ""
-                ]
-            if classColor then
-
-                row.ClassText:SetTextColor(
-                    classColor.r,
-                    classColor.g,
-                    classColor.b
-                )
-            else
-                row.ClassText:SetTextColor(
-                    1,
-                    1,
-                    1
-                )
-            end
-            -- Guild
-            -- =====================================================
-            row.GuildText:SetText(
-                player.guild or "-"
-            )
-            -- Rating
-            -- =====================================================
-
-            row.RatingText:SetText(
-                string.format(
-                    "%.1f",
-                    addon.DB:GetAverageRating(
-                        player.name
-                    )
-                )
-            )
-
-
-            -- Runs
-            -- =====================================================
-
-            row.RunsText:SetText(
-                tostring(
-                    player.runs or 0
-                )
-            )
-
-
-            -- Notes Indicator
-            -- =====================================================
-
-            if player.notes
-                and player.notes ~= "" then
-
-                    row.NoteButton:SetText(
-                        "📝"
-                    )
-
-                else
-
-                    row.NoteButton:SetText(
-                        ""
-                    )
-
-                end
-
-            -- Highlight Selected Row
-            -- =====================================================
-
-            if playerName ==
-                self.ExpandedPlayer then
-
-                row.NameText:SetTextColor(
-                    1,
-                    1,
-                    0
-                )
-
-            else
-
-                row.NameText:SetTextColor(
-                    1,
-                    1,
-                    1
-                )
-
-            end
 
             row:Show()
 
@@ -1486,125 +657,13 @@ function UI:RefreshDetailCard()
         5
     )
 
-    -- Notes
-    -- ==========================================================
-
-    local note =
-        player.notes or ""
-
-    if note == "" then
-
-        note = "No notes recorded."
-
-    end
-
-    card.NotesText:SetText(
-        "Notes:\n\n" ..
-        note
-    )
-
-    -- Character
-    -- ==========================================================
-
-    card.LastLevelText:SetText(
-        "Last Level: " ..
-        tostring(
-            player.lastSeenLevel or "-"
-        )
-    )
-
-    local roleText = "Unknown"
-
-    if player.lastSeenRole == "TANK" then
-
-        roleText =
-            "|cff6fa8dcTank|r"
-
-    elseif player.lastSeenRole == "HEALER" then
-
-        roleText =
-            "|cff93c47dHealer|r"
-
-    elseif player.lastSeenRole == "DAMAGER" then
-
-        roleText =
-            "|cfff6b26bDPS|r"
-
-    end
-
-    card.LastRoleText:SetText(
-        "Last Role: " ..
-        roleText
-    )
-
-
-    -- Rating
-    -- ==========================================================
-
-    local ratings =
-        addon.DB:GetRatings(
-            player.name
-        )
-
-    if #ratings == 0 then
-
-        card.CurrentRatingText:SetText(
-            "Current Rating: -"
-        )
-
-    else
-
-        card.CurrentRatingText:SetText(
-            string.format(
-                "Current Rating: %.1f",
-                addon.DB:GetAverageRating(
-                    player.name
-                )
-            )
-        )
-
-    end
-
-    local lastRating =
-        addon.DB:GetLastRating(
-            player.name
-        )
-
-    card.LastRatingText:SetText(
-        "Last Rating: " ..
-        tostring(
-            lastRating or "-"
-        )
-    )
-
-    -- History
-    -- ==========================================================
-
-    card.FirstSeenText:SetText(
-        "First Seen:\n" ..
-        addon:FormatTimestamp(
-            player.firstSeen
-        )
-    )
-
-    card.LastSeenText:SetText(
-        "Last Seen:\n" ..
-        addon:FormatTimestamp(
-            player.lastSeen
-        )
-    )
-
-    card.RunsHistoryText:SetText(
-        "Runs Together:\n" ..
-        tostring(
-            player.runs or 0
-        )
+    addon.UI.DetailCard:Refresh(
+        card,
+        player
     )
 
     card:Show()
-
 end
-
 
 -- Toggle Window
 -- ============================================================================
