@@ -16,20 +16,26 @@ Core\CoreEvents.lua
 Database\Database.lua
 
 # Database\Migration.lua
-# Database\Session.lua
 
 
 
-UI\Theme.lua
+
+
+UI\Theme\Theme.lua
+UI\Theme\ThemePaper.lua
+UI\Theme\BusinessCard.lua
+UI\Theme\DetailCard.lua
+UI\Theme\Notes.lua
+UI\Theme\RatingPrompt.lua
+UI\Theme\ThemeMainFrame.lua
+# UI\Widgets.lua
+UI\MinimapButton.lua
 UI\BusinessCard.lua
 UI\DetailCard.lua
+UI\Search.lua
 UI\MainFrame.lua
 UI\Tooltips.lua
-
 UI\RatingPrompt.lua
-# UI\Widgets.lua
-
-
 
 
 # Chat\ChatHooks.lua

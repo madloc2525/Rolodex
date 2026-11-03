@@ -198,75 +198,12 @@ SlashCmdList["ROLODEXDEBUG"] = function()
 
 end
 
--- temp debug code ============================================================================
-SLASH_TESTFAVORITE1 = "/testfavorite"
 
-SlashCmdList["TESTFAVORITE"] = function()
 
-    addon.DB:SetFavorite(
-        "Velysse Dawnmere",
-        true
-    )
-
-    local player =
-        addon.DB:GetPlayer(
-            "Velysse Dawnmere"
-        )
-
-    print(
-        "TEST:",
-        player.favorite
-    )
-
-    addon.UI:Refresh()
-
-end
-
--- ============================================================================
--- Create Arbitrary Test Player
---
--- Example:
---
--- /rolodexcreate Magebob
---
--- Useful for quickly populating the database during UI testing.
---
--- ============================================================================
-
-SLASH_ROLODEXCREATE1 = "/rolodexcreate"
-
-SlashCmdList["ROLODEXCREATE"] = function(msg)
-
-    local name = strtrim(msg or "")
-
-    if name == "" then
-
-        addon:DebugPrint(
-            "Usage: /rolodexcreate PlayerName"
-        )
-
-        return
-    end
-
-    local player = addon.DB:CreatePlayer(name)
-
-    addon:DebugPrint(
-        string.format(
-            "Created player '%s'.",
-            player.name
-        )
-    )
-
-end
-
--- ============================================================================
 -- Delete Player / Wipe
---
 -- Example:
 -- /rolodexdelete Tankadin
 -- /rolodexwipe
--- 
---
 -- ============================================================================
 
 SLASH_ROLODEXDELETE1 = "/rolodexdelete"

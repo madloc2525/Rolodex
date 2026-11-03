@@ -22,12 +22,11 @@ function RatingPrompt:CreateWindow()
         CreateFrame(
             "Frame",
             "RolodexRatingPrompt",
-            UIParent,
-            "BasicFrameTemplateWithInset"
+            UIParent
         )
 
     frame:SetSize(
-        350,
+        320,
         180
     )
 
@@ -35,9 +34,49 @@ function RatingPrompt:CreateWindow()
         "CENTER"
     )
 
+    frame:SetMovable(true)
+    frame:EnableMouse(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetClampedToScreen(true)
+    frame:SetScript(
+        "OnDragStart",
+        frame.StartMoving
+    )
+    frame:SetScript(
+        "OnDragStop",
+        function(prompt)
+            prompt:StopMovingOrSizing()
+
+            local left = prompt:GetLeft()
+            local bottom = prompt:GetBottom()
+            if left and bottom then
+                RolodexDB = RolodexDB or {}
+                RolodexDB.ratingPromptPosition = {
+                    left = left,
+                    bottom = bottom
+                }
+            end
+        end
+    )
+
     frame:SetFrameStrata(
         "DIALOG"
     )
+
+    addon.UI.ThemePaper:Apply(frame)
+
+    local savedPosition =
+        RolodexDB and RolodexDB.ratingPromptPosition
+    if savedPosition then
+        frame:ClearAllPoints()
+        frame:SetPoint(
+            "BOTTOMLEFT",
+            UIParent,
+            "BOTTOMLEFT",
+            savedPosition.left,
+            savedPosition.bottom
+        )
+    end
 
     frame:Hide()
 
@@ -51,12 +90,13 @@ function RatingPrompt:CreateWindow()
     frame.Title:SetPoint(
         "TOP",
         0,
-        -10
+        -34
     )
 
     frame.Title:SetText(
         "Session Review"
     )
+    addon.UI.Theme:ApplyHeaderStyle(frame.Title)
     -- Name
     frame.PlayerName =
         frame:CreateFontString(
@@ -68,8 +108,9 @@ function RatingPrompt:CreateWindow()
     frame.PlayerName:SetPoint(
         "TOP",
         0,
-        -45
+        -56
     )
+    addon.UI.Theme:ApplyHeaderStyle(frame.PlayerName)
 
     -- Class
 
@@ -85,8 +126,11 @@ function RatingPrompt:CreateWindow()
         frame.PlayerName,
         "BOTTOM",
         0,
-        -5
+        -4
     )
+    addon.UI.Theme:ApplyBodyStyle(frame.ClassText)
+    frame.ClassText:SetShadowColor(0, 0, 0, 1)
+    frame.ClassText:SetShadowOffset(1, -1)
 
     -- Role
 
@@ -102,8 +146,11 @@ function RatingPrompt:CreateWindow()
         frame.ClassText,
         "BOTTOM",
         0,
-        -5
+        -4
     )
+    addon.UI.Theme:ApplyBodyStyle(frame.RoleText)
+    frame.RoleText:SetShadowColor(0, 0, 0, 1)
+    frame.RoleText:SetShadowOffset(1, -1)
 
     frame.GuildText =
         frame:CreateFontString(
@@ -119,6 +166,7 @@ function RatingPrompt:CreateWindow()
         0,
         -5
     )
+    addon.UI.Theme:ApplyBodyStyle(frame.GuildText)
 
     frame.RatingText =
         frame:CreateFontString(
@@ -134,6 +182,7 @@ function RatingPrompt:CreateWindow()
         0,
         -10
     )
+    addon.UI.Theme:ApplyBodyStyle(frame.RatingText)
 
     -- Rating 1
 
@@ -152,7 +201,7 @@ function RatingPrompt:CreateWindow()
 
     frame.Rating1:SetPoint(
         "BOTTOMLEFT",
-        40,
+        65,
         20
     )
 
@@ -225,7 +274,7 @@ function RatingPrompt:CreateWindow()
         )
 
     frame.SkipButton:SetSize(
-        60,
+        40,
         22
     )
 
@@ -238,7 +287,21 @@ function RatingPrompt:CreateWindow()
     )
 
     frame.SkipButton:SetText(
-        "Skip"
+        "»"
+    )
+    frame.SkipButton:SetScript(
+        "OnEnter",
+        function(button)
+            GameTooltip:SetOwner(button, "ANCHOR_BOTTOM")
+            GameTooltip:SetText("Skip")
+            GameTooltip:Show()
+        end
+    )
+    frame.SkipButton:SetScript(
+        "OnLeave",
+        function()
+            GameTooltip:Hide()
+        end
     )
 
     frame.Rating1:SetScript(

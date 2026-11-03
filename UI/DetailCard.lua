@@ -8,6 +8,22 @@ addon.UI.DetailCard = DetailCard
 
 local UI = addon.UI
 
+StaticPopupDialogs["ROLODEX_DELETE_PLAYER"] = {
+    text = "Delete %s from the Rolodex?",
+    button1 = YES,
+    button2 = CANCEL,
+    OnAccept = function(_, playerName)
+        addon.DB:DeletePlayer(playerName)
+        UI.ExpandedPlayer = nil
+        UI.SelectedRow = nil
+        UI:Refresh()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3
+}
+
 local function CreateText(card, template, ...)
     local text = card:CreateFontString(nil, "OVERLAY", template)
     text:SetPoint(...)
@@ -18,19 +34,22 @@ function DetailCard:Create(parent)
     local card = CreateFrame(
         "Frame",
         nil,
-        parent,
-        "BasicFrameTemplateWithInset"
+        parent
     )
 
-    card:SetSize(600, 250)
+    card:SetSize(470, 200)
     card:SetFrameStrata("HIGH")
     card:SetFrameLevel(100)
     card:Hide()
-    card.CloseButton:Hide()
+    if card.CloseButton then card.CloseButton:Hide()
+    end
+    if card.Bg then card.Bg:Hide()
+    end
+    addon.UI.ThemePaper:Apply(card)
+    -- addon.UI.DetailCardTheme:Apply(card)
 
-   
-
--- Notes
+    --Hide blizzard art
+    -- Notes
     card.NotesText = CreateText(
         card,
         "GameFontNormalSmall",
@@ -39,7 +58,9 @@ function DetailCard:Create(parent)
         12,
         -30
         )
-
+    addon.UI.Theme:ApplyBodyStyle(
+        card.NotesText
+    )
     card.NotesText:SetWidth(560)
     card.NotesText:SetJustifyH("LEFT")
 
@@ -48,19 +69,14 @@ function DetailCard:Create(parent)
 card.Divider =
     card:CreateTexture(
         nil,
-        "ARTWORK"
+        "OVERLAY"
     )
 
-card.Divider:SetColorTexture(
-    0.4,
-    0.4,
-    0.4,
-    1
-)
+
 
 card.Divider:SetSize(
-    560,
-    1
+    500,
+    0
 )
 
 card.Divider:SetPoint(
@@ -69,6 +85,10 @@ card.Divider:SetPoint(
     "BOTTOMLEFT",
     0,
     -10
+)
+
+addon.UI.Theme:ApplyDividerStyle(
+    card.Divider
 )
 
 -- Character Column
@@ -86,7 +106,11 @@ card.CharacterHeader =
 
 card.CharacterHeader:SetText(
     "Character"
-)
+    )
+
+    addon.UI.Theme:ApplyHeaderStyle(
+        card.CharacterHeader
+    )
 
 card.LastLevelText =
     CreateText(
@@ -98,8 +122,10 @@ card.LastLevelText =
         0,
         -10
     )
+    addon.UI.Theme:ApplyBodyStyle(
+    card.LastLevelText)
 
-card.LastRoleText =
+card.LastRoleLabel =
     CreateText(
         card,
         "GameFontNormal",
@@ -108,6 +134,50 @@ card.LastRoleText =
         "BOTTOMLEFT",
         0,
         -10
+    )
+    addon.UI.Theme:ApplyBodyStyle(
+    card.LastRoleLabel)
+
+
+    card.LastRoleValue =
+    CreateText(
+        card,
+        "GameFontNormal",
+        "LEFT",
+        card.LastRoleLabel,
+        "RIGHT",
+        5,
+        0
+    )
+
+    card.DeletePlayerButton = CreateFrame(
+        "Button",
+        nil,
+        card,
+        "UIPanelButtonTemplate"
+    )
+    card.DeletePlayerButton:SetSize(60, 22)
+    card.DeletePlayerButton:SetPoint(
+        "TOPLEFT",
+        card.LastRoleLabel,
+        "BOTTOMLEFT",
+        0,
+        -12
+    )
+    card.DeletePlayerButton:SetText("Delete")
+    card.DeletePlayerButton:SetScript(
+        "OnClick",
+        function()
+            local playerName = UI.ExpandedPlayer
+            if playerName then
+                StaticPopup_Show(
+                    "ROLODEX_DELETE_PLAYER",
+                    playerName,
+                    nil,
+                    playerName
+                )
+            end
+        end
     )
 
 -- Rating Column
@@ -126,6 +196,9 @@ card.RatingHeader =
 card.RatingHeader:SetText(
     "Rating"
 )
+addon.UI.Theme:ApplyHeaderStyle(
+    card.RatingHeader
+)
 
 card.CurrentRatingText =
     CreateText(
@@ -137,6 +210,8 @@ card.CurrentRatingText =
         0,
         -10
     )
+addon.UI.Theme:ApplyBodyStyle(
+    card.CurrentRatingText)
 
 -- History Column
 
@@ -154,6 +229,9 @@ card.HistoryHeader =
 card.HistoryHeader:SetText(
     "History"
 )
+addon.UI.Theme:ApplyHeaderStyle(
+    card.HistoryHeader
+)
 
 card.FirstSeenText =
     CreateText(
@@ -166,6 +244,10 @@ card.FirstSeenText =
         -10
     )
 
+addon.UI.Theme:ApplyBodyStyle(
+    card.FirstSeenText
+)
+
 card.LastSeenText =
     CreateText(
         card,
@@ -176,6 +258,9 @@ card.LastSeenText =
         0,
         -8
     )
+addon.UI.Theme:ApplyBodyStyle(
+    card.LastSeenText
+)
 
 card.RunsHistoryText =
     CreateText(
@@ -187,7 +272,11 @@ card.RunsHistoryText =
         0,
         -8
     )
-    
+addon.UI.Theme:ApplyBodyStyle(
+    card.RunsHistoryText
+)
+
+
     -- Manual Rating Buttons
     card.Rating1Button = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
     card.Rating1Button:SetSize(25, 20)
@@ -214,6 +303,9 @@ card.RunsHistoryText =
         0,
         -10
     )
+    addon.UI.Theme:ApplyBodyStyle(
+    card.LastRatingText
+)
     
 
     local function AddRating(rating)
@@ -239,6 +331,8 @@ card.RunsHistoryText =
     return card
 end
 
+-- Refresh function
+-- ======================================================================
 function DetailCard:Refresh(card, player) 
 
     local note = player.notes or ""
@@ -250,8 +344,14 @@ function DetailCard:Refresh(card, player)
     card.LastLevelText:SetText(
         "Last Level: " .. tostring(player.lastSeenLevel or "-")
     )
-    card.LastRoleText:SetText(
-        "Last Role: " .. addon.UI.Theme:FormatRole(player.lastSeenRole)
+    card.LastRoleLabel:SetText(
+    "Last Role:"
+    )
+
+    card.LastRoleValue:SetText(
+        addon.UI.Theme:FormatRole(
+            player.lastSeenRole
+        )
     )
     local averageRating =
     addon.DB:GetAverageRating(

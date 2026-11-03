@@ -64,8 +64,14 @@ function UI:CreateMainFrame()
         "BasicFrameTemplateWithInset"
     )
 
-    frame:SetSize(800, 500)
+    frame:SetSize(600, 380)
     frame:SetPoint("CENTER")
+    -- addon.UI.ThemeMainFrame:Apply(
+    --     frame
+    -- )
+    if frame.Bg then
+        frame.Bg:Hide()
+    end
 
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -96,13 +102,16 @@ function UI:CreateMainFrame()
     )
 
     frame.title:SetPoint(
-        "TOP",
-        0,
+        "TOPLEFT",
+        50,
         -8
     )
 
     frame.title:SetText("Rolodex")
+    frame.title:SetTextColor(1, 1, 1)
 
+    frame.SearchBox = addon.UI.Search:Create(frame)
+    frame.SearchBox:SetTextColor(1, 1, 1)
 
     -- Sort button (cycling for now)
     -- =========================================================
@@ -114,12 +123,6 @@ function UI:CreateMainFrame()
     )
 
     frame.SortButton:SetSize(100, 22)
-
-    frame.SortButton:SetPoint(
-        "TOPRIGHT",
-        -110,
-        -28
-    )
 
     frame.SortButton:SetText(
         "Sort: Name"
@@ -155,9 +158,73 @@ function UI:CreateMainFrame()
             )
 
             UI:Refresh()
-
         end
     )
+
+    frame.SettingsButton = CreateFrame(
+        "Button",
+        nil,
+        frame,
+        "UIPanelButtonTemplate"
+    )
+    frame.SettingsButton:SetSize(24, 24)
+    frame.SettingsButton:SetPoint(
+        "RIGHT",
+        frame.CloseButton,
+        "LEFT",
+        -4,
+        -2
+    )
+    frame.SettingsButton:SetText("")
+    frame.SettingsButton.Icon = frame.SettingsButton:CreateTexture(
+        nil,
+        "ARTWORK"
+    )
+    frame.SettingsButton.Icon:SetPoint("TOPLEFT", 4, -4)
+    frame.SettingsButton.Icon:SetPoint("BOTTOMRIGHT", -4, 4)
+    frame.SettingsButton.Icon:SetTexture(
+        "Interface\\Buttons\\UI-OptionsButton"
+    )
+    frame.SettingsButton.Icon:SetVertexColor(1, 0.2, 0.2)
+    frame.SettingsButton:SetScript(
+        "OnEnter",
+        function(button)
+            GameTooltip:SetOwner(button, "ANCHOR_BOTTOM")
+            GameTooltip:SetText("Settings")
+            GameTooltip:Show()
+        end
+    )
+    frame.SettingsButton:SetScript(
+        "OnLeave",
+        function()
+            GameTooltip:Hide()
+        end
+    )
+
+    frame.SortButton:SetPoint(
+        "RIGHT",
+        frame.SettingsButton,
+        "LEFT",
+        -6,
+        0
+    )
+    frame.SearchBox:SetPoint(
+        "RIGHT",
+        frame.SortButton,
+        "LEFT",
+        -8,
+        0
+    )
+
+    local columnHeaders = {
+        { "Flag", 25 },
+        { "Name", 50 },
+        { "Class", 205 },
+        { "Guild", 285 },
+        { "Rating", 425 },
+        { "Runs", 475 },
+        { "Notes", 525 }
+    }
 
 -- Player Rows
 -- ==========================================================
@@ -166,19 +233,19 @@ frame.ScrollFrame =
     CreateFrame(
         "ScrollFrame",
         nil,
-        frame,
-        "UIPanelScrollFrameTemplate"
+        frame
     )
 
 frame.ScrollFrame:SetPoint(
     "TOPLEFT",
     10,
-    -60
+    -52
 )
 
-frame.ScrollFrame:SetSize(
-    780,
-    400
+frame.ScrollFrame:SetPoint(
+    "BOTTOMRIGHT",
+    -30,
+    14
 )
 
 frame.ScrollFrame:EnableMouseWheel(true)
@@ -187,19 +254,19 @@ frame.ScrollFrame:SetScript(
     "OnMouseWheel",
     function(_, delta)
 
-        local current =
-            frame.ScrollFrame:GetVerticalScroll()
+        local maxScroll = math.max(
+            0,
+            frame.ScrollChild:GetHeight() - frame.ScrollFrame:GetHeight()
+        )
+        local nextScroll =
+            frame.ScrollFrame:GetVerticalScroll() - (delta * 22)
 
-        frame.ScrollFrame:SetVerticalScroll(
+        frame.ScrollBar:SetValue(
             math.max(
                 0,
-                current - (delta * 20)
+                math.min(maxScroll, nextScroll)
             )
         )
-
-        UI.ExpandedPlayer = nil
-
-        UI: Refresh()
 
     end
 )
@@ -214,27 +281,93 @@ frame.ScrollChild =
     )
 
 frame.ScrollChild:SetSize(
-    760,
-    2400
+    560,
+    frame.ScrollFrame:GetHeight()
 )
 
 frame.ScrollFrame:SetScrollChild(
     frame.ScrollChild
 )
 
+frame.ScrollBar = CreateFrame(
+    "Slider",
+    nil,
+    frame
+)
+frame.ScrollBar:SetPoint(
+    "TOPRIGHT",
+    frame,
+    "TOPRIGHT",
+    -8,
+    -52
+)
+frame.ScrollBar:SetPoint(
+    "BOTTOMRIGHT",
+    frame,
+    "BOTTOMRIGHT",
+    -8,
+    14
+)
+frame.ScrollBar:SetWidth(16)
+frame.ScrollBar:SetOrientation("VERTICAL")
+frame.ScrollBar.Track = frame.ScrollBar:CreateTexture(
+    nil,
+    "BACKGROUND"
+)
+frame.ScrollBar.Track:SetAllPoints(frame.ScrollBar)
+frame.ScrollBar.Track:SetColorTexture(0.08, 0.06, 0.04, 0.8)
+frame.ScrollBar:SetThumbTexture(
+    "Interface\\Buttons\\UI-ScrollBar-Knob"
+)
+frame.ScrollBar:GetThumbTexture():SetSize(16, 28)
+frame.ScrollBar:SetMinMaxValues(0, 0)
+frame.ScrollBar:SetValueStep(22)
+frame.ScrollBar:SetObeyStepOnDrag(true)
+frame.ScrollBar:SetScript(
+    "OnValueChanged",
+    function(_, value)
+        frame.ScrollFrame:SetVerticalScroll(value)
+    end
+)
+frame.ScrollFrame:SetScript(
+    "OnVerticalScroll",
+    function(_, offset)
+        frame.ScrollBar:SetValue(offset)
+    end
+)
+
+frame.ColumnHeaderOverlay = CreateFrame(
+    "Frame",
+    nil,
+    frame
+)
+frame.ColumnHeaderOverlay:SetAllPoints(frame)
+frame.ColumnHeaderOverlay:SetFrameLevel(
+    frame.ScrollChild:GetFrameLevel() + 1
+)
+
+frame.ColumnHeaders = {}
+for index, column in ipairs(columnHeaders) do
+    local header = frame.ColumnHeaderOverlay:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontNormalSmall"
+    )
+    header:SetPoint(
+        "TOPLEFT",
+        frame.ColumnHeaderOverlay,
+        "TOPLEFT",
+        column[2],
+        -34
+    )
+    header:SetText(column[1])
+    header:SetTextColor(1, 1, 1)
+    frame.ColumnHeaders[index] = header
+end
+
 -- Player Rows
 
 frame.Rows = {}
-
-for i = 1, 100 do
-
-    frame.Rows[i] =
-        addon.UI.BusinessCard:Create(
-            frame.ScrollChild,
-            i
-        )
-
-end
 
 -- Detail Card
 
@@ -250,8 +383,7 @@ frame.DetailCard =
     frame.NotesFrame = CreateFrame(
         "Frame",
         nil,
-        frame,
-        "BasicFrameTemplateWithInset"
+        frame
     )
 
     frame.NotesFrame:SetSize(
@@ -265,6 +397,10 @@ frame.DetailCard =
 
     frame.NotesFrame:SetFrameStrata(
         "DIALOG"
+    )
+
+    addon.UI.ThemePaper:Apply(
+        frame.NotesFrame
     )
 
     frame.NotesFrame:Hide()
@@ -292,6 +428,10 @@ frame.DetailCard =
         "Player Notes"
     )
 
+    addon.UI.Theme:ApplyHeaderStyle(
+        notesFrame.Title
+    )
+
     -- Note Frame Scroll
     -- ==========================================================
 
@@ -315,6 +455,8 @@ frame.DetailCard =
         50
     )
 
+
+
     -- Note FrameEdit Box
     -- ==========================================================
 
@@ -329,6 +471,9 @@ frame.DetailCard =
     notesFrame.EditBox:EnableMouse(true)
     notesFrame.EditBox:SetWidth(320)
     notesFrame.EditBox:SetText("")
+    addon.UI.Theme:ApplyBodyStyle(
+        notesFrame.EditBox
+    )
     notesFrame.ScrollFrame:SetScrollChild(
         notesFrame.EditBox
     )
@@ -399,6 +544,12 @@ frame.DetailCard =
         "Cancel"
     )
 
+    notesFrame.CancelButton:SetScript(
+        "OnClick",
+        function()
+            notesFrame:Hide()
+        end
+    )
 
 
 end -- Close CreateMainFrame
@@ -415,16 +566,22 @@ function UI:RefreshPlayerList()
     end
 
     local playerNames = {}
+    local searchText = string.lower(
+        self.SearchText or ""
+    )
 
     -- Build sortable name list.
     for name in pairs(
         addon.DB:GetAllPlayers()
     ) do
 
-        table.insert(
-            playerNames,
-            name
-        )
+        local player = addon.DB:GetPlayer(name)
+        if addon.UI.Search:Matches(name, player, searchText) then
+            table.insert(
+                playerNames,
+                name
+            )
+        end
 
     end
 
@@ -541,14 +698,46 @@ function UI:RefreshPlayerList()
 
     end
 
-    local contentHeight =
-        math.max(
-            400,
-            (#playerNames * 22) + 20
+    local viewportHeight =
+        self.MainFrame.ScrollFrame:GetHeight()
+    local contentHeight = viewportHeight
+
+    if #playerNames > 0 then
+        contentHeight = math.max(
+            viewportHeight,
+            24 + ((#playerNames - 1) * 22)
         )
+    end
 
     self.MainFrame.ScrollChild:SetHeight(
         contentHeight
+    )
+
+    for i = #self.MainFrame.Rows + 1, #playerNames do
+        self.MainFrame.Rows[i] =
+            addon.UI.BusinessCard:Create(
+                self.MainFrame.ScrollChild,
+                i
+            )
+    end
+
+    local maxScroll = math.max(
+        0,
+        contentHeight - viewportHeight
+    )
+    self.MainFrame.ScrollFrame:SetVerticalScroll(
+        math.min(
+            self.MainFrame.ScrollFrame:GetVerticalScroll(),
+            maxScroll
+        )
+    )
+
+    self.MainFrame.ScrollBar:SetMinMaxValues(0, maxScroll)
+    self.MainFrame.ScrollBar:SetValue(
+        math.min(
+            self.MainFrame.ScrollFrame:GetVerticalScroll(),
+            maxScroll
+        )
     )
 
     -- Populate rows.
@@ -564,7 +753,7 @@ function UI:RefreshPlayerList()
             local player =
                 addon.DB:GetPlayer(
                     playerName
-                )  
+                )
 
             row.PlayerName =
                 playerName          
@@ -588,9 +777,8 @@ function UI:RefreshPlayerList()
 end
 
 
--- ============================================================================
+
 -- Refresh Detail Card
---
 -- Displays additional context and historical information.
 -- ============================================================================
 
@@ -653,8 +841,8 @@ function UI:RefreshDetailCard()
         "TOPLEFT",
         selectedRow,
         "BOTTOMLEFT",
-        20,
-        5
+        17,
+        25
     )
 
     addon.UI.DetailCard:Refresh(

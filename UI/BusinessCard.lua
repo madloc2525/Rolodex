@@ -23,8 +23,33 @@ function BusinessCard:Create(parent, index)
     row:SetPoint(
         "TOPLEFT",
         15,
-        -40 - ((index - 1) * 22)
+        -4 - ((index - 1) * 22)
     )
+
+    row.Background =
+    row:CreateTexture(
+        nil,
+        "BACKGROUND"
+    )
+
+    row.Background:SetPoint(
+        "TOPLEFT",
+        row,
+        "TOPLEFT",
+        2,
+        -2
+    )
+    row.Background:SetPoint(
+        "BOTTOMRIGHT",
+        row,
+        "BOTTOMRIGHT",
+        -2,
+        2
+    )
+
+    -- row.Background:SetTexture(
+    --     "Interface\\AddOns\\Rolodex\\Media\\Textures\\RowLeather.PNG"
+    -- )
     -- Flag (Favorite, Avoid or nil)
     row.FlagText = row:CreateFontString(
     nil,
@@ -37,6 +62,7 @@ function BusinessCard:Create(parent, index)
         5,
         0
     )
+
     -- Flag toggle button
     row.FlagButton = CreateFrame(
     "Button",
@@ -218,6 +244,9 @@ function BusinessCard:Create(parent, index)
     end
 )
 
+    return row
+end
+
 function BusinessCard:Refresh(
     row,
     player,
@@ -308,14 +337,15 @@ function BusinessCard:Refresh(
     -- Rating
     -- =====================================================
 
-    row.RatingText:SetText(
-        string.format(
-            "%.1f",
-            addon.DB:GetAverageRating(
-                player.name
-            )
+    local averageRating =
+        addon.DB:GetAverageRating(player.name)
+    if averageRating == 0 then
+        row.RatingText:SetText("-")
+    else
+        row.RatingText:SetText(
+            string.format("%.1f", averageRating)
         )
-    )
+    end
 
     -- Runs
     -- =====================================================
@@ -339,16 +369,14 @@ function BusinessCard:Refresh(
     else
 
         row.NoteButton.Text:SetText(
-            ""
+            "✎"
         )
 
     end
 
     -- Highlight
     -- =====================================================
-
-    if playerName ==
-    UI.ExpandedPlayer then
+if playerName == UI.ExpandedPlayer then
 
     row.NameText:SetTextColor(
         1,
@@ -356,15 +384,13 @@ function BusinessCard:Refresh(
         0
     )
 
-    else
+else
 
-        row.NameText:SetTextColor(
-            1,
-            1,
-            1
-        )
-
-    end
+    row.NameText:SetTextColor(
+        1,
+        1,
+        1
+    )
 
 end
 
@@ -375,11 +401,13 @@ end
         row.PlayerName then
 
             UI.ExpandedPlayer = nil
+            UI.SelectedRow = nil
 
         else
 
             UI.ExpandedPlayer =
                 row.PlayerName
+            UI.SelectedRow = row
 
         end
 
