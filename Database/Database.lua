@@ -24,6 +24,49 @@ local DB = addon.DB
 
 DB.VERSION = 1
 
+-- Settings
+DB.DEFAULT_SETTINGS = {
+
+    -- General
+    ShowMinimapButton = true,
+    EnableRatingPrompt = true,
+    LockMainFrame = false,
+    AllowResize = true,
+    ShowRolodexTooltip = true,
+
+    -- Business Cards
+    ShowClass = true,
+    ShowGuild = true,
+    ShowLevel = true,
+    ShowRole = true,
+    ShowRuns = true,
+    ShowAverageRating = true,
+    HighlightSelectedRow = true,
+    ShowFavoritesFirst = false,
+    AutoExpandSelectedPlayer = true,
+
+    -- Detail Cards
+    ShowNotes = true,
+    ShowCharacterSection = true,
+    ShowRatingSection = true,
+    ShowHistorySection = true,
+    ShowRatingHistory = true,
+    ShowRunsHistory = true,
+    ShowRatingButtons = true,
+    EnableManualRating= true,
+    -- Database
+    ConfirmDatabaseWipe = true,
+
+    -- Skins
+    SelectedSkin = "Leather",
+
+    -- Advanced
+    DebugEnabled = false,
+    ExperimentalFeatures = false,
+    TrackGroupMembers = true,
+    TrackRaidMembers = true,
+    EnableVerboseLogging = false,
+}
 
 -- Initialization
 -- --------------------------------------------------------------------------------------
@@ -39,7 +82,32 @@ function DB:Initialize()
     -- Main player storage.
     RolodexDB.players = RolodexDB.players or {}
 
-    addon:DebugPrint("Database initialized.")
+    -- Settings
+    RolodexDB.Settings =
+        RolodexDB.Settings or {}
+
+    for key, value in pairs(
+        DB.DEFAULT_SETTINGS
+    ) do
+
+        if RolodexDB.Settings[key] == nil then
+
+            RolodexDB.Settings[key] = value
+
+        end
+
+    end
+
+    addon:DebugPrint(
+        "Database initialized."
+    )
+
+    RolodexDB.Window = RolodexDB.Window or {}
+    RolodexDB.Window.Width = RolodexDB.Window.Width or 600
+    RolodexDB.Window.Height = RolodexDB.Window.Height or 380
+    RolodexDB.Window.Point = RolodexDB.Window.Point or "CENTER"
+    RolodexDB.Window.X = RolodexDB.Window.X or 0
+    RolodexDB.Window.Y = RolodexDB.Window.Y or 0
 
 end
 
@@ -136,6 +204,8 @@ function DB:GetOrCreatePlayer(name)
 end
 
 
+
+
 -- Delete Player
 -- ----------------------------------------------------------------------------------
 
@@ -225,26 +295,6 @@ function DB:SetLastRunTogether(name)
     local player = self:GetOrCreatePlayer(name)
 
     player.lastRunTogether = time()
-
-end
-
-function DB:GetLastRating(name)
-
-    local player = self:GetPlayer(name)
-
-    if not player then
-        return 0
-    end
-
-    if not player.ratings then
-        return 0
-    end
-
-    if #player.ratings == 0 then
-        return 0
-    end
-
-    return player.ratings[#player.ratings].value
 
 end
 
@@ -426,18 +476,28 @@ function DB:GetLastRating(name)
     local ratings =
         self:GetRatings(name)
 
-    if not ratings
-    or #ratings == 0 then
-
+    if #ratings == 0 then
         return nil
-
     end
 
     return ratings[#ratings].value
 
 end
 
--- 
+-- Settings handler
+
+function DB:GetSetting(setting)
+
+    return RolodexDB.Settings[setting]
+
+end
+
+function DB:SetSetting(setting, value)
+
+    RolodexDB.Settings[setting] = value
+
+end
+
 -- Utility / misc
 -- ----------------------------------------------------------------------------------
 function DB:GetPlayerCount()

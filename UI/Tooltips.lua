@@ -39,6 +39,9 @@ end
 TooltipDataProcessor.AddTooltipPostCall(
     Enum.TooltipDataType.Unit,
     function(tooltip)
+        if not RolodexDB.Settings.ShowRolodexTooltip then
+            return
+        end
 
         local data =
             tooltip:GetTooltipData()
@@ -46,17 +49,6 @@ TooltipDataProcessor.AddTooltipPostCall(
         if not data then
             return
         end
-
-
-        local tooltipName =
-        data.lines[1].leftText
-
-
-
-        local player =
-            addon.DB:GetPlayer(
-                tooltipName
-            )
 
         local tooltipName =
             data.lines[1].leftText

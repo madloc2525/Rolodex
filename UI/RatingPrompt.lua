@@ -499,6 +499,13 @@ end
 
 function RatingPrompt:Show()
 
+    if not addon.DB:GetSetting("EnableRatingPrompt") then
+        if self.Frame then
+            self.Frame:Hide()
+        end
+        return
+    end
+
     if not self.Frame then
 
         self:CreateWindow()

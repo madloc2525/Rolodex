@@ -33,6 +33,7 @@ UI\MinimapButton.lua
 UI\BusinessCard.lua
 UI\DetailCard.lua
 UI\Search.lua
+UI\Settings.lua
 UI\MainFrame.lua
 UI\Tooltips.lua
 UI\RatingPrompt.lua

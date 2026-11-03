@@ -87,10 +87,9 @@ function addon:GROUP_ROSTER_UPDATE()
 
         if addon.UI
         and addon.UI.RatingPrompt
-        and addon.UI.RatingPrompt.Show then
-
+        and addon.UI.RatingPrompt.Show
+        and addon.DB:GetSetting("EnableRatingPrompt") then
             addon.UI.RatingPrompt:Show()
-
         end
 
     end

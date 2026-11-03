@@ -47,7 +47,6 @@ Rolodex.Core = Rolodex.Core or {}
 Rolodex.DB = Rolodex.DB or {}
 Rolodex.UI = Rolodex.UI or {}
 Rolodex.Chat = Rolodex.Chat or {}
-Rolodex.Session = Rolodex.Session or {}
 Rolodex.Integration = Rolodex.Integration or {}
 
 

@@ -146,11 +146,7 @@ function BusinessCard:Create(parent, index)
         "GameFontNormal"
     )
 
-    row.ClassText:SetPoint(
-        "LEFT",
-        180,
-        0
-    )
+    row.ClassText:SetPoint("LEFT", row, "LEFT", 180, 0)
     -- Guild
     row.GuildText = row:CreateFontString(
     nil,
@@ -158,11 +154,7 @@ function BusinessCard:Create(parent, index)
     "GameFontNormalSmall"
     )
 
-    row.GuildText:SetPoint(
-        "LEFT",
-        260,
-        0
-    )
+    row.GuildText:SetPoint("LEFT", row, "LEFT", 260, 0)
     -- Rating
     row.RatingText = row:CreateFontString(
     nil,
@@ -170,11 +162,7 @@ function BusinessCard:Create(parent, index)
     "GameFontNormal"
     )
 
-    row.RatingText:SetPoint(
-        "LEFT",
-        400,
-        0
-    )
+    row.RatingText:SetPoint("LEFT", row, "LEFT", 400, 0)
     -- Runs together
     row.RunsText = row:CreateFontString(
     nil,
@@ -182,11 +170,7 @@ function BusinessCard:Create(parent, index)
     "GameFontNormal"
     )
 
-    row.RunsText:SetPoint(
-        "LEFT",
-        450,
-        0
-    )
+    row.RunsText:SetPoint("LEFT", row, "LEFT", 450, 0)
     -- Note
     row.NoteButton = CreateFrame(
     "Button",
@@ -199,11 +183,7 @@ function BusinessCard:Create(parent, index)
         20
     )
 
-    row.NoteButton:SetPoint(
-        "LEFT",
-        500,
-        0
-    )
+    row.NoteButton:SetPoint("LEFT", row, "LEFT", 500, 0)
 
     row.NoteButton.Text =
         row.NoteButton:CreateFontString(
@@ -304,6 +284,12 @@ function BusinessCard:Refresh(
         )
     )
 
+    if addon.DB:GetSetting("ShowClass") then
+        row.ClassText:Show()
+    else
+        row.ClassText:Hide()
+    end
+
     local classColor =
     addon.UI.Theme:GetClassColor(
         player.class
@@ -334,6 +320,12 @@ function BusinessCard:Refresh(
         player.guild or "-"
     )
 
+    if addon.DB:GetSetting("ShowGuild") then
+        row.GuildText:Show()
+    else
+        row.GuildText:Hide()
+    end
+
     -- Rating
     -- =====================================================
 
@@ -347,6 +339,12 @@ function BusinessCard:Refresh(
         )
     end
 
+    if addon.DB:GetSetting("ShowAverageRating") then
+        row.RatingText:Show()
+    else
+        row.RatingText:Hide()
+    end
+
     -- Runs
     -- =====================================================
 
@@ -355,6 +353,12 @@ function BusinessCard:Refresh(
             player.runs or 0
         )
     )
+
+    if addon.DB:GetSetting("ShowRuns") then
+        row.RunsText:Show()
+    else
+        row.RunsText:Hide()
+    end
 
     -- Notes Indicator
     -- =====================================================
@@ -395,25 +399,21 @@ else
 end
 
 
-    row:SetScript("OnClick", function()
-
-        if UI.ExpandedPlayer ==
-        row.PlayerName then
-
-            UI.ExpandedPlayer = nil
-            UI.SelectedRow = nil
-
-        else
-
+row:SetScript("OnClick", function()
+    if UI.SelectedRow == row then
+        UI.SelectedRow = nil
+        UI.ExpandedPlayer = nil
+    else
+        UI.SelectedRow = row
+        if RolodexDB.Settings.AutoExpandSelectedPlayer then
             UI.ExpandedPlayer =
                 row.PlayerName
-            UI.SelectedRow = row
-
+        else
+            UI.ExpandedPlayer = nil
         end
-
-        UI:Refresh()
-
-    end)
+    end
+    UI:Refresh()
+end)
 
     return row
 

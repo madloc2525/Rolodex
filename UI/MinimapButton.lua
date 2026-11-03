@@ -6,6 +6,27 @@ local MinimapButton = {}
 
 addon.UI.MinimapButton = MinimapButton
 
+local BUTTON_SIZE = 32
+local ICON_SIZE = 20
+local BORDER_SIZE = 54
+local ICON_MASK = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
+
+local function PositionButton(button, angle)
+    local radius = (math.min(Minimap:GetWidth(), Minimap:GetHeight()) / 2)
+        + (BUTTON_SIZE / 2)
+        - 4
+    local radians = math.rad(angle)
+
+    button:ClearAllPoints()
+    button:SetPoint(
+        "CENTER",
+        Minimap,
+        "CENTER",
+        math.cos(radians) * radius,
+        math.sin(radians) * radius
+    )
+end
+
 -- ============================================================================
 -- Create
 -- ============================================================================
@@ -18,11 +39,14 @@ function MinimapButton:Create()
         Minimap
     )
 
-    button:SetSize(32, 32)
+    button:SetSize(BUTTON_SIZE, BUTTON_SIZE)
 
     button:SetFrameStrata(
         "MEDIUM"
     )
+
+    button:SetClampedToScreen(true)
+    button:RegisterForDrag("LeftButton")
 
     -- Icon
     button.Icon =
@@ -31,22 +55,50 @@ function MinimapButton:Create()
             "ARTWORK"
         )
 
-    button.Icon:SetAllPoints()
-
     button.Icon:SetTexture(
-        "Interface\\AddOns\\Rolodex\\Media\\Icons\\MinimapIcon.PNG"
+        "Interface\\AddOns\\Rolodex\\Media\\Icons\\MinimapIcon.png"
     )
 
-    -- Position
-    button:SetPoint(
+    button.Icon:SetSize(
+        ICON_SIZE,
+        ICON_SIZE
+    )
+    button.Icon:SetPoint(
         "TOPLEFT",
-        Minimap,
+        button,
         "TOPLEFT",
-        -5,
-        5
+        7,
+        -5
+    )
+    button.IconMask = button:CreateMaskTexture(
+        nil,
+        "ARTWORK"
+    )
+    button.IconMask:SetTexture(ICON_MASK)
+    button.IconMask:SetAllPoints(button.Icon)
+    button.Icon:AddMaskTexture(button.IconMask)
+
+    -- Blizzard's minimap tracking ring frames the circularly masked icon.
+    button.Border =
+        button:CreateTexture(
+            nil,
+            "OVERLAY"
+        )
+
+    button.Border:SetTexture(
+        "Interface\\Minimap\\MiniMap-TrackingBorder"
+    )
+    button.Border:SetSize(
+        BORDER_SIZE,
+        BORDER_SIZE
+    )
+    button.Border:SetPoint(
+        "TOPLEFT",
+        button,
+        "TOPLEFT"
     )
 
-    -- Highlight
+    -- Mouse-over glow
     button.Highlight =
         button:CreateTexture(
             nil,
@@ -69,25 +121,76 @@ function MinimapButton:Create()
         "RightButtonUp"
     )
 
+    local savedAngle = RolodexDB and RolodexDB.minimapButtonAngle
+    PositionButton(button, savedAngle or 135)
+
     button:SetScript(
-        "OnClick",
-        function(_, mouseButton)
-
-            if mouseButton ==
-                "LeftButton" then
-
-                addon.UI:Toggle()
-
-            elseif mouseButton ==
-                "RightButton" then
-
-                -- Future:
-                -- Open Settings
-
+        "OnMouseDown",
+        function(self, mouseButton)
+            if mouseButton == "LeftButton" then
+                self.WasDragged = false
             end
-
         end
     )
+
+    button:SetScript(
+        "OnDragStart",
+        function(self)
+            self.WasDragged = true
+            self:SetScript(
+                "OnUpdate",
+                function()
+                    local cursorX, cursorY = GetCursorPosition()
+                    local scale = Minimap:GetEffectiveScale()
+                    local centerX, centerY = Minimap:GetCenter()
+                    centerX = centerX * scale
+                    centerY = centerY * scale
+
+                    local angle = math.deg(
+                        math.atan2(
+                            cursorY - centerY,
+                            cursorX - centerX
+                        )
+                    )
+
+                    PositionButton(self, angle)
+                    self.Angle = angle
+                end
+            )
+        end
+    )
+
+    button:SetScript(
+        "OnDragStop",
+        function(self)
+            self:SetScript("OnUpdate", nil)
+            if self.Angle then
+                RolodexDB = RolodexDB or {}
+                RolodexDB.minimapButtonAngle = self.Angle
+            end
+        end
+    )
+
+    button:SetScript(
+    "OnClick",
+    function(self, mouseButton)
+
+        if mouseButton == "LeftButton" then
+
+    if addon.UI and addon.UI.ToggleMainFrame then
+
+        addon.UI:ToggleMainFrame()
+
+    end
+
+    elseif mouseButton == "RightButton" then
+
+        addon.UI.Settings:Toggle()
+
+    end
+
+end
+)
 
     -- Tooltip
     button:SetScript(
@@ -101,9 +204,9 @@ function MinimapButton:Create()
 
             GameTooltip:AddLine(
                 "Rolodex",
-                1,
+                1.0,
                 0.82,
-                0
+                0.0
             )
 
             GameTooltip:AddLine(
@@ -140,6 +243,28 @@ function MinimapButton:Create()
 
     self.Button = button
 
+    if not addon.DB:GetSetting("ShowMinimapButton") then
+
+        button:Hide()
+
+    end
+
     return button
+
+end
+
+function MinimapButton:SetShown(shown)
+
+    addon.DB:SetSetting("ShowMinimapButton", shown)
+
+    if not self.Button then
+        return
+    end
+
+    if shown then
+        self.Button:Show()
+    else
+        self.Button:Hide()
+    end
 
 end
