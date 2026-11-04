@@ -38,17 +38,8 @@ SlashCmdList["ROLODEX"] = function()
     -- UI will eventually hook into this.
     if addon.UI and addon.UI.ToggleMainFrame then
         addon.UI:ToggleMainFrame()
-        return
-    end
-
-        if addon.UI and addon.UI.ToggleMainFrame then
-
-        addon.UI:ToggleMainFrame()
-
     else
-
         addon:DebugPrint("UI unavailable.")
-
     end
 
 end
@@ -72,7 +63,7 @@ SlashCmdList["ROLODEXTEST"] = function()
         "Knights of Azeroth"
     )
 
-    addon.DB:SetLevel(
+    addon.DB:SetLastSeenLevel(
         "Tankadin",
         60
     )
@@ -136,7 +127,7 @@ SlashCmdList["ROLODEXSHOW"] = function(msg)
     addon:DebugPrint("Player: " .. player.name)
     addon:DebugPrint("Class: " .. player.class)
     addon:DebugPrint("Guild: " .. player.guild)
-    addon:DebugPrint("Level: " .. player.level)
+    addon:DebugPrint("Level: " .. tostring(player.lastSeenLevel or "-"))
     addon:DebugPrint("Groups: " .. player.groups)
 
     addon:DebugPrint(

@@ -34,37 +34,24 @@ DB.DEFAULT_SETTINGS = {
     AllowResize = true,
     ShowRolodexTooltip = true,
 
-    -- Business Cards
+    -- Business card columns and sorting
     ShowClass = true,
     ShowGuild = true,
-    ShowLevel = true,
-    ShowRole = true,
     ShowGroups = true,
     ShowAverageRating = true,
-    HighlightSelectedRow = true,
     ShowFavoritesFirst = false,
     AutoExpandSelectedPlayer = true,
 
-    -- Detail Cards
+    -- Detail card sections
     ShowNotes = true,
     ShowCharacterSection = true,
     ShowRatingSection = true,
     ShowGroupHistory = true,
     ShowRatingHistory = true,
-    ShowRatingButtons = true,
-    EnableManualRating= true,
-    -- Database
+    EnableManualRating = true,
+
+    -- Database maintenance
     ConfirmDatabaseWipe = true,
-
-    -- Skins
-    SelectedSkin = "Leather",
-
-    -- Advanced
-    DebugEnabled = false,
-    ExperimentalFeatures = false,
-    TrackGroupMembers = true,
-    TrackRaidMembers = true,
-    EnableVerboseLogging = false,
 }
 
 -- Initialization
@@ -86,6 +73,10 @@ function DB:Initialize()
         RolodexDB.Settings or {}
 
     local settings = RolodexDB.Settings
+    if settings.AllowResize == nil and settings.LockWindowSize ~= nil then
+        settings.AllowResize = not settings.LockWindowSize
+    end
+    settings.LockWindowSize = nil
     if settings.ShowGroups == nil then
         settings.ShowGroups = settings.ShowRuns
     end
@@ -118,6 +109,7 @@ function DB:Initialize()
 
     end
 
+    -- Move pre-1.0 run terminology to group terminology in saved player records.
     for _, player in pairs(RolodexDB.players) do
         player.groups = player.groups or player.runs or 0
         player.groupHistory = player.groupHistory or player.runHistory or {}
@@ -165,30 +157,21 @@ function DB:CreatePlayer(name)
     end
 
     local player = {
-
-    name = name,
-
-    class = "UNKNOWN",
-    guild = "",
-    lastSeenLevel = 0,
-    lastSeenSpec = "Unknown",
-
-    firstGroupTogether = time(),
-    lastGroupTogether = time(),
-
-    firstSeen = time(),
-    lastSeen = time(),
-
-    groups = 0,
-
-    groupHistory = {},
-
-    favorite = false,
-    avoid = false,
-
-    notes = "",
-
-    ratings = {}
+        name = name,
+        class = "UNKNOWN",
+        guild = "",
+        lastSeenLevel = 0,
+        lastSeenSpec = "Unknown",
+        firstGroupTogether = time(),
+        lastGroupTogether = time(),
+        firstSeen = time(),
+        lastSeen = time(),
+        groups = 0,
+        groupHistory = {},
+        favorite = false,
+        avoid = false,
+        notes = "",
+        ratings = {},
     }
 
     RolodexDB.players[name] = player
@@ -285,19 +268,6 @@ function DB:SetGuild(name, guild)
 
 end
 
-function DB:SetLastSeenLevel(
-    name,
-    level
-)
-
-    local player =
-        self:GetOrCreatePlayer(name)
-
-    player.lastSeenLevel =
-        level
-
-end
-
 function DB:SetLastSeenRole(
     name,
     role
@@ -336,30 +306,16 @@ function DB:SetLastSeenSpec(name, spec)
 
 end
 
-function DB:SetLastGroupTogether(name)
-
-    local player = self:GetOrCreatePlayer(name)
-
-    player.lastGroupTogether = time()
-end
-
 function DB:IncrementGroups(name)
-    local player =
-        self:GetOrCreatePlayer(name)
-    local now =
-        time()
+    local player = self:GetOrCreatePlayer(name)
+    local now = time()
+
     player.groupHistory = player.groupHistory or {}
-    player.groups =
-        (player.groups or 0) + 1
-    player.lastGroupTogether =
-        now
-    table.insert(
-        player.groupHistory,
-        {
-            timestamp = now
-        }
-    )
+    player.groups = (player.groups or 0) + 1
+    player.lastGroupTogether = now
+    table.insert(player.groupHistory, { timestamp = now })
 end
+
 -- Get Group History (and str)
 function DB:GetGroupHistory(name)
     local player =
@@ -608,7 +564,7 @@ function DB:PlayerExists(name)
 
 end
 
--- Get Players by First Name for Toolip
+-- Find the first player record matching a unit tooltip's first name.
 function DB:GetPlayerByFirstName(firstName)
 
     for _, player in pairs(RolodexDB.players) do
@@ -626,50 +582,6 @@ function DB:GetPlayerByFirstName(firstName)
     end
 
     return nil
-
-end
-
--- Get group sessions with timestamp for history column
-function DB:AddGroup(name)
-
-    local player =
-        self:GetOrCreatePlayer(name)
-    local now = time()
-
-    player.groupHistory = player.groupHistory or {}
-    player.groups =
-        (player.groups or 0) + 1
-
-    player.lastGroupTogether =
-        now
-
-    table.insert(
-        player.groupHistory,
-        {
-            timestamp = now
-        }
-    )
-
-end
-
--- 
--- Debug (temp)
--- ----------------------------------------------------------------------------------
-
-function DB:DebugPlayer(name)
-
-    local player = self:GetPlayer(name)
-
-    if not player then
-        addon:DebugPrint("Player not found.")
-        return
-    end
-
-    addon:DebugPrint("Name: " .. player.name)
-    addon:DebugPrint("Groups: " .. player.groups)
-    addon:DebugPrint("Average Rating: " .. string.format("%.2f", self:GetAverageRating(name)))
-    addon:DebugPrint("Favorite: " .. tostring(player.favorite))
-    addon:DebugPrint("Avoid: " .. tostring(player.avoid))
 
 end
 

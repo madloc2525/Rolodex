@@ -116,33 +116,12 @@ TooltipDataProcessor.AddTooltipPostCall(
 
         end
 
-            tooltip:AddLine(
-                "Groups: " ..
-                tostring(player.groups or 0),
-                1,
-                1,
-                1
-            )
+        tooltip:AddLine("Groups: " .. tostring(player.groups or 0), 1, 1, 1)
 
-            if player.notes
-            and player.notes ~= "" then
-
+        if player.notes and player.notes ~= "" then
             tooltip:AddLine(" ")
-
-            tooltip:AddLine(
-                "Notes:",
-                1,
-                1,
-                1
-            )
-
-            tooltip:AddLine(
-                player.notes,
-                0.8,
-                0.8,
-                0.8
-            )
-
+            tooltip:AddLine("Notes:", 1, 1, 1)
+            tooltip:AddLine(player.notes, 0.8, 0.8, 0.8)
         end
     end
 )

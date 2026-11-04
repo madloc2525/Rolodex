@@ -171,26 +171,13 @@ function MinimapButton:Create()
         end
     )
 
-    button:SetScript(
-    "OnClick",
-    function(self, mouseButton)
-
-        if mouseButton == "LeftButton" then
-
-    if addon.UI and addon.UI.ToggleMainFrame then
-
+    button:SetScript("OnClick", function(self, mouseButton)
+    if mouseButton == "LeftButton" then
         addon.UI:ToggleMainFrame()
-
-    end
-
     elseif mouseButton == "RightButton" then
-
         addon.UI.Settings:Toggle()
-
     end
-
-end
-)
+    end)
 
     -- Tooltip
     button:SetScript(

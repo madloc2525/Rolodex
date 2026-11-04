@@ -1,13 +1,5 @@
 
--- Main Rolodex window.
--- Version 0.4
--- Features:
-
--- - Movable frame
--- - Clickable player rows
--- - Selected player tracking
--- - Detail card display
--- ============================================================================
+-- Creates and manages the main Rolodex window and player list.
 
 local addon = Rolodex
 
@@ -90,9 +82,6 @@ function UI:CreateMainFrame()
         RolodexDB.Window.Y
 )
 
-    -- addon.UI.ThemeMainFrame:Apply(
-    --     frame
-    -- )
     if frame.Bg then
         frame.Bg:Hide()
     end
@@ -100,7 +89,11 @@ function UI:CreateMainFrame()
     frame:SetMovable(true)
     frame:EnableMouse(true)
 
-    frame:RegisterForDrag("LeftButton")
+    if addon.DB:GetSetting("LockMainFrame") then
+        frame:RegisterForDrag()
+    else
+        frame:RegisterForDrag("LeftButton")
+    end
 
     frame:SetScript(
         "OnDragStart",
@@ -132,7 +125,7 @@ function UI:CreateMainFrame()
         end
     )
 
-    frame:SetResizable(true)
+    frame:SetResizable(addon.DB:GetSetting("AllowResize"))
     frame:SetScript(
         "OnSizeChanged",
         function(self, width, height)
@@ -173,8 +166,9 @@ function UI:CreateMainFrame()
             frame:StopMovingOrSizing()
         end
     )
+    frame.ResizeButton:SetShown(addon.DB:GetSetting("AllowResize"))
 
-        self.MainFrame = frame
+    self.MainFrame = frame
 
     -- Title
     -- ==========================================================
@@ -496,9 +490,7 @@ frame.DetailCard =
         "DIALOG"
     )
 
-    addon.UI.ThemePaper:Apply(
-        frame.NotesFrame
-    )
+    addon.UI.Theme:ApplyPaperBackground(frame.NotesFrame)
 
     frame.NotesFrame:Hide()
 
@@ -618,99 +610,90 @@ frame.DetailCard =
     -- Note Frame Cancel Button
     -- ==========================================================
 
-    notesFrame.CancelButton = CreateFrame("Button",nil,notesFrame,"UIPanelButtonTemplate")
-    notesFrame.CancelButton:SetSize(100,22)
-    notesFrame.CancelButton:SetPoint("BOTTOMRIGHT",-80,15)
+    notesFrame.CancelButton = CreateFrame("Button", nil, notesFrame, "UIPanelButtonTemplate")
+    notesFrame.CancelButton:SetSize(100, 22)
+    notesFrame.CancelButton:SetPoint("BOTTOMRIGHT", -80, 15)
     notesFrame.CancelButton:SetText("Cancel")
-    notesFrame.CancelButton:SetScript("OnClick",function()notesFrame:Hide()end)
+    notesFrame.CancelButton:SetScript("OnClick", function()
+        notesFrame:Hide()
+    end)
     frame:Hide()
+end
+
+-- Main-window preference actions
+function UI:ResetWindowPosition()
+    local frame = self.MainFrame
+
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER")
+
+    RolodexDB.Window.Point = "CENTER"
+    RolodexDB.Window.X = 0
+    RolodexDB.Window.Y = 0
+end
+
+function UI:ResetWindowSize()
+    local frame = self.MainFrame
+
+    frame:SetSize(800, 500)
+
+    RolodexDB.Window.Width = 800
+    RolodexDB.Window.Height = 500
+end
+
+function UI:UpdateColumnLayout()
+    local frame = self.MainFrame
+    local headers = frame.ColumnHeaders
+    local cursor = 180
+
+    local function setRowAnchor(field, x)
+        for _, row in ipairs(frame.Rows) do
+            row[field]:ClearAllPoints()
+            row[field]:SetPoint("LEFT", row, "LEFT", x, 0)
+        end
     end
-    -- Reset buttons
-    function UI:ResetWindowPosition()
 
-        local frame = self.MainFrame
-
-        frame:ClearAllPoints()
-
-        frame:SetPoint(
-            "CENTER"
+    local function setHeaderAnchor(name, x)
+        local header = headers[name]
+        header:ClearAllPoints()
+        header:SetPoint(
+            "TOPLEFT",
+            frame.ColumnHeaderOverlay,
+            "TOPLEFT",
+            x,
+            -34
         )
-
-        RolodexDB.Window.Point = "CENTER"
-        RolodexDB.Window.X = 0
-        RolodexDB.Window.Y = 0
-
     end
 
-    function UI:ResetWindowSize()
+    local function configureColumn(name, setting, field, spacing)
+        local enabled = addon.DB:GetSetting(setting)
+        local header = headers[name]
 
-        local frame = self.MainFrame
-
-        frame:SetSize(
-            800,
-            500
-        )
-
-        RolodexDB.Window.Width = 800
-        RolodexDB.Window.Height = 500
-
-    end
-
-    function UI:UpdateColumnLayout()
-
-        local frame = self.MainFrame
-        local headers = frame.ColumnHeaders
-        local cursor = 180
-
-        local function setRowAnchor(field, x)
+        if enabled then
+            setRowAnchor(field, cursor)
+            setHeaderAnchor(name, cursor + 25)
+            header:Show()
+            cursor = cursor + spacing
+        else
+            header:Hide()
             for _, row in ipairs(frame.Rows) do
-                row[field]:ClearAllPoints()
-                row[field]:SetPoint("LEFT", row, "LEFT", x, 0)
+                row[field]:Hide()
             end
         end
-
-        local function setHeaderAnchor(name, x)
-            local header = headers[name]
-            header:ClearAllPoints()
-            header:SetPoint(
-                "TOPLEFT",
-                frame.ColumnHeaderOverlay,
-                "TOPLEFT",
-                x,
-                -34
-            )
-        end
-
-        local function configureColumn(name, setting, field, spacing)
-            local enabled = addon.DB:GetSetting(setting)
-            local header = headers[name]
-
-            if enabled then
-                setRowAnchor(field, cursor)
-                setHeaderAnchor(name, cursor + 25)
-                header:Show()
-                cursor = cursor + spacing
-            else
-                header:Hide()
-                for _, row in ipairs(frame.Rows) do
-                    row[field]:Hide()
-                end
-            end
-        end
-
-        configureColumn("Class", "ShowClass", "ClassText", 80)
-        configureColumn("Guild", "ShowGuild", "GuildText", 125)
-        configureColumn("Rating", "ShowAverageRating", "RatingText", 45)
-        configureColumn("Groups", "ShowGroups", "GroupsText", 45)
-
-        setRowAnchor("NoteButton", cursor)
-        setHeaderAnchor("Notes", cursor + 25)
-
-        headers.Flag:Show()
-        headers.Name:Show()
-        headers.Notes:Show()
-
     end
+
+    configureColumn("Class", "ShowClass", "ClassText", 80)
+    configureColumn("Guild", "ShowGuild", "GuildText", 125)
+    configureColumn("Rating", "ShowAverageRating", "RatingText", 45)
+    configureColumn("Groups", "ShowGroups", "GroupsText", 45)
+
+    setRowAnchor("NoteButton", cursor)
+    setHeaderAnchor("Notes", cursor + 25)
+
+    headers.Flag:Show()
+    headers.Name:Show()
+    headers.Notes:Show()
+end
 
 -- ============================================================================
 -- Refresh Player List

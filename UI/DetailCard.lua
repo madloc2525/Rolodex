@@ -41,12 +41,13 @@ function DetailCard:Create(parent)
     card:SetFrameStrata("HIGH")
     card:SetFrameLevel(100)
     card:Hide()
-    if card.CloseButton then card.CloseButton:Hide()
+    if card.CloseButton then
+        card.CloseButton:Hide()
     end
-    if card.Bg then card.Bg:Hide()
+    if card.Bg then
+        card.Bg:Hide()
     end
-    addon.UI.ThemePaper:Apply(card)
-    -- addon.UI.DetailCardTheme:Apply(card)
+    addon.UI.Theme:ApplyPaperBackground(card)
 
     -- Notes
     card.NotesHeader = CreateText(
@@ -75,37 +76,14 @@ function DetailCard:Create(parent)
     card.NotesText:SetWidth(450)
     card.NotesText:SetJustifyH("LEFT")
 
--- Divider
+    -- Divider
+    card.Divider = card:CreateTexture(nil, "OVERLAY")
+    card.Divider:SetSize(450, 0)
+    card.Divider:SetPoint("TOPLEFT", card.NotesText, "BOTTOMLEFT", 0, -10)
+    addon.UI.Theme:ApplyDividerStyle(card.Divider)
 
-card.Divider =
-    card:CreateTexture(
-        nil,
-        "OVERLAY"
-    )
-
-
-
-card.Divider:SetSize(
-    450,
-    0
-)
-
-card.Divider:SetPoint(
-    "TOPLEFT",
-    card.NotesText,
-    "BOTTOMLEFT",
-    0,
-    -10
-)
-
-addon.UI.Theme:ApplyDividerStyle(
-    card.Divider
-)
-
--- Character Column
-
-card.CharacterHeader =
-    CreateText(
+    -- Character column
+    card.CharacterHeader = CreateText(
         card,
         "GameFontHighlight",
         "TOPLEFT",
@@ -114,17 +92,10 @@ card.CharacterHeader =
         0,
         -10
     )
+    card.CharacterHeader:SetText("Character")
+    addon.UI.Theme:ApplyHeaderStyle(card.CharacterHeader)
 
-card.CharacterHeader:SetText(
-    "Character"
-    )
-
-    addon.UI.Theme:ApplyHeaderStyle(
-        card.CharacterHeader
-    )
-
-card.LastLevelText =
-    CreateText(
+    card.LastLevelText = CreateText(
         card,
         "GameFontNormal",
         "TOPLEFT",
@@ -133,11 +104,9 @@ card.LastLevelText =
         0,
         -10
     )
-    addon.UI.Theme:ApplyBodyStyle(
-    card.LastLevelText)
+    addon.UI.Theme:ApplyBodyStyle(card.LastLevelText)
 
-card.LastRoleLabel =
-    CreateText(
+    card.LastRoleLabel = CreateText(
         card,
         "GameFontNormal",
         "TOPLEFT",
@@ -146,12 +115,9 @@ card.LastRoleLabel =
         0,
         -10
     )
-    addon.UI.Theme:ApplyBodyStyle(
-    card.LastRoleLabel)
+    addon.UI.Theme:ApplyBodyStyle(card.LastRoleLabel)
 
-
-    card.LastRoleValue =
-    CreateText(
+    card.LastRoleValue = CreateText(
         card,
         "GameFontNormal",
         "LEFT",
@@ -161,40 +127,19 @@ card.LastRoleLabel =
         0
     )
 
-    card.DeletePlayerButton = CreateFrame(
-        "Button",
-        nil,
-        card,
-        "UIPanelButtonTemplate"
-    )
+    card.DeletePlayerButton = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
     card.DeletePlayerButton:SetSize(60, 22)
-    card.DeletePlayerButton:SetPoint(
-        "TOPLEFT",
-        card.LastRoleLabel,
-        "BOTTOMLEFT",
-        0,
-        -12
-    )
+    card.DeletePlayerButton:SetPoint("TOPLEFT", card.LastRoleLabel, "BOTTOMLEFT", 0, -12)
     card.DeletePlayerButton:SetText("Delete")
-    card.DeletePlayerButton:SetScript(
-        "OnClick",
-        function()
-            local playerName = UI.ExpandedPlayer
-            if playerName then
-                StaticPopup_Show(
-                    "ROLODEX_DELETE_PLAYER",
-                    playerName,
-                    nil,
-                    playerName
-                )
-            end
+    card.DeletePlayerButton:SetScript("OnClick", function()
+        local playerName = UI.ExpandedPlayer
+        if playerName then
+            StaticPopup_Show("ROLODEX_DELETE_PLAYER", playerName, nil, playerName)
         end
-    )
+    end)
 
--- Rating Column
-
-card.RatingHeader =
-    CreateText(
+    -- Rating column
+    card.RatingHeader = CreateText(
         card,
         "GameFontHighlight",
         "TOPLEFT",
@@ -203,16 +148,10 @@ card.RatingHeader =
         150,
         -10
     )
+    card.RatingHeader:SetText("Rating")
+    addon.UI.Theme:ApplyHeaderStyle(card.RatingHeader)
 
-card.RatingHeader:SetText(
-    "Rating"
-)
-addon.UI.Theme:ApplyHeaderStyle(
-    card.RatingHeader
-)
-
-card.CurrentRatingText =
-    CreateText(
+    card.CurrentRatingText = CreateText(
         card,
         "GameFontNormal",
         "TOPLEFT",
@@ -221,29 +160,30 @@ card.CurrentRatingText =
         0,
         -10
     )
-addon.UI.Theme:ApplyBodyStyle(
-    card.CurrentRatingText)
+    addon.UI.Theme:ApplyBodyStyle(card.CurrentRatingText)
 
--- History Column
-
-    card.HistoryHeader = CreateText(card,"GameFontHighlight","TOPLEFT",card.Divider,"BOTTOMLEFT",300,-10)
+    -- Group history column
+    card.HistoryHeader = CreateText(
+        card,
+        "GameFontHighlight",
+        "TOPLEFT",
+        card.Divider,
+        "BOTTOMLEFT",
+        300,
+        -10
+    )
     card.HistoryHeader:SetText("Group History")
-
     addon.UI.Theme:ApplyHeaderStyle(card.HistoryHeader)
 
-    -- Scroll Frame
-    card.HistoryScrollFrame = CreateFrame("ScrollFrame",nil,card,"UIPanelScrollFrameTemplate")
-    card.HistoryScrollFrame:SetPoint("TOPLEFT",card.HistoryHeader,"BOTTOMLEFT",0,-8)
-    card.HistoryScrollFrame:SetSize(170,150)
-    -- Content Frame
-    card.HistoryContent =CreateFrame("Frame",nil,card.HistoryScrollFrame)
-    card.HistoryContent:SetSize(140,1)
+    card.HistoryScrollFrame = CreateFrame("ScrollFrame", nil, card, "UIPanelScrollFrameTemplate")
+    card.HistoryScrollFrame:SetPoint("TOPLEFT", card.HistoryHeader, "BOTTOMLEFT", 0, -8)
+    card.HistoryScrollFrame:SetSize(170, 150)
+    card.HistoryContent = CreateFrame("Frame", nil, card.HistoryScrollFrame)
+    card.HistoryContent:SetSize(140, 1)
     card.HistoryScrollFrame:SetScrollChild(card.HistoryContent)
-    -- Cached rows
     card.HistoryRows = {}
 
-
-    -- Manual Rating Buttons
+    -- Manual rating controls
     card.Rating1Button = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
     card.Rating1Button:SetSize(25, 20)
     card.Rating1Button:SetPoint("TOPLEFT", card.CurrentRatingText, "BOTTOMLEFT", 0, -10)
@@ -259,8 +199,7 @@ addon.UI.Theme:ApplyBodyStyle(
     card.Rating3Button:SetPoint("LEFT", card.Rating2Button, "RIGHT", 5, 0)
     card.Rating3Button:SetText("3")
 
-    card.LastRatingText =
-    CreateText(
+    card.LastRatingText = CreateText(
         card,
         "GameFontNormal",
         "TOPLEFT",
@@ -269,10 +208,7 @@ addon.UI.Theme:ApplyBodyStyle(
         0,
         -10
     )
-    addon.UI.Theme:ApplyBodyStyle(
-    card.LastRatingText
-)
-    
+    addon.UI.Theme:ApplyBodyStyle(card.LastRatingText)
 
     local function AddRating(rating)
         local playerName = UI.ExpandedPlayer
@@ -302,6 +238,7 @@ end
 function DetailCard:Refresh(card, player) 
 
     local settings = RolodexDB.Settings
+    -- Move columns down with visible notes, but keep top padding when notes are hidden.
 
     if settings.ShowNotes then
         local note = player.notes or ""
@@ -312,24 +249,12 @@ function DetailCard:Refresh(card, player)
         card.NotesHeader:Show()
         card.NotesText:Show()
         card.Divider:ClearAllPoints()
-        card.Divider:SetPoint(
-            "TOPLEFT",
-            card.NotesText,
-            "BOTTOMLEFT",
-            0,
-            -10
-        )
+        card.Divider:SetPoint("TOPLEFT", card.NotesText, "BOTTOMLEFT", 0, -10)
     else
         card.NotesHeader:Hide()
         card.NotesText:Hide()
         card.Divider:ClearAllPoints()
-        card.Divider:SetPoint(
-            "TOPLEFT",
-            card,
-            "TOPLEFT",
-            12,
-            -40
-        )
+        card.Divider:SetPoint("TOPLEFT", card, "TOPLEFT", 12, -40)
     end
 
     local showCharacterSection = not not settings.ShowCharacterSection
@@ -352,35 +277,17 @@ function DetailCard:Refresh(card, player)
     card.LastLevelText:SetText(
         "Last Level: " .. tostring(player.lastSeenLevel or "-")
     )
-    card.LastRoleLabel:SetText(
-    "Last Role:"
-    )
+    card.LastRoleLabel:SetText("Last Role:")
 
-    card.LastRoleValue:SetText(
-        addon.UI.Theme:FormatRole(
-            player.lastSeenRole
-        )
-    )
-    local averageRating =
-    addon.DB:GetAverageRating(
-        player.name
-    )
-        if averageRating == 0 then
+    card.LastRoleValue:SetText(addon.UI.Theme:FormatRole(player.lastSeenRole))
 
-            card.CurrentRatingText:SetText(
-                "Current Rating: -"
-            )
-        else
-            card.CurrentRatingText:SetText(
-                string.format(
-                    "Average: %.1f",
-                    averageRating
-                )
-            )
-        end
-    card.LastRatingText:SetText(
-        "Last Rating: " .. tostring(addon.DB:GetLastRating(player.name) or "-")
-    )
+    local averageRating = addon.DB:GetAverageRating(player.name)
+    if averageRating == 0 then
+        card.CurrentRatingText:SetText("Current Rating: -")
+    else
+        card.CurrentRatingText:SetText(string.format("Average: %.1f", averageRating))
+    end
+    card.LastRatingText:SetText("Last Rating: " .. tostring(addon.DB:GetLastRating(player.name) or "-"))
     local history = addon.DB:GetGroupHistory(player.name)
     local rowIndex = 1
     for i = #history, 1, -1 do

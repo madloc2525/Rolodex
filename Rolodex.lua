@@ -8,15 +8,7 @@
 -- 4. Route events.
 -- 5. Initialize modules.
 --
--- If you fork this, don't bloat this file. Leave it small
---
--- Most functionality belongs in:
---
--- Core/ (<<- esp here)
--- Database/
--- UI/
--- Chat/
--- Integration/
+-- Keep feature logic in Core/, Database/, or UI/.
 --
 -- ----------------------------------------------------------------------------
 --
@@ -26,8 +18,6 @@
 -- 2. Core modules
 -- 3. Database modules
 -- 4. UI modules
--- 5. Chat modules
--- 6. Integration modules
 --
 -- ----------------------------------------------------------------------------
 
@@ -38,7 +28,7 @@ Rolodex = {}
 
 -- Basic addon metadata.
 Rolodex.Name = ADDON_NAME
-Rolodex.Version = "0.1.0"
+Rolodex.Version = "1.0.0"
 
 -- Module Namespaces
 -- ----------------------------------------------------------------------------
@@ -46,8 +36,6 @@ Rolodex.Version = "0.1.0"
 Rolodex.Core = Rolodex.Core or {}
 Rolodex.DB = Rolodex.DB or {}
 Rolodex.UI = Rolodex.UI or {}
-Rolodex.Chat = Rolodex.Chat or {}
-Rolodex.Integration = Rolodex.Integration or {}
 
 
 -- Shared Event Frame
@@ -77,10 +65,7 @@ function Rolodex:Print(message)
 
 end
 
--- Development helper.
---
--- temp space/temp debugging
---
+-- Development helper controlled by /rolodexdebug.
 Rolodex.DebugEnabled = false
 
 function Rolodex:DebugPrint(...)
@@ -160,19 +145,9 @@ function Rolodex:PLAYER_LOGIN()
         self.Core:Initialize()
     end
 
-    -- Session tracking.
-    if self.Session and self.Session.Initialize then
-        self.Session:Initialize()
-    end
-
     -- User interface.
     if self.UI and self.UI.Initialize then
         self.UI:Initialize()
-    end
-
-    -- Chat integration.
-    if self.Chat and self.Chat.Initialize then
-        self.Chat:Initialize()
     end
 
     self:Print(

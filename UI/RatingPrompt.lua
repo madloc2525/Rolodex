@@ -63,7 +63,7 @@ function RatingPrompt:CreateWindow()
         "DIALOG"
     )
 
-    addon.UI.ThemePaper:Apply(frame)
+    addon.UI.Theme:ApplyPaperBackground(frame)
 
     local savedPosition =
         RolodexDB and RolodexDB.ratingPromptPosition

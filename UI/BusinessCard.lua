@@ -1,4 +1,4 @@
--- Handles the business card UI for displaying player information 
+-- Creates and refreshes the player rows shown in the main window.
 
 local addon = Rolodex
 
@@ -26,31 +26,7 @@ function BusinessCard:Create(parent, index)
         -4 - ((index - 1) * 22)
     )
 
-    row.Background =
-    row:CreateTexture(
-        nil,
-        "BACKGROUND"
-    )
-
-    row.Background:SetPoint(
-        "TOPLEFT",
-        row,
-        "TOPLEFT",
-        2,
-        -2
-    )
-    row.Background:SetPoint(
-        "BOTTOMRIGHT",
-        row,
-        "BOTTOMRIGHT",
-        -2,
-        2
-    )
-
-    -- row.Background:SetTexture(
-    --     "Interface\\AddOns\\Rolodex\\Media\\Textures\\RowLeather.PNG"
-    -- )
-    -- Flag (Favorite, Avoid or nil)
+    -- Favorite, avoid, or unflagged state
     row.FlagText = row:CreateFontString(
     nil,
     "OVERLAY",
@@ -196,33 +172,31 @@ function BusinessCard:Create(parent, index)
 
     row.NoteButton.Text:SetText("✎")
 
-    row.NoteButton:SetScript(
-    "OnClick",
-    function()
+    row.NoteButton:SetScript("OnClick", function()
+        local player = addon.DB:GetPlayer(row.PlayerName)
+        if not player then
+            return
+        end
 
-        local player =
-            addon.DB:GetPlayer(
-                row.PlayerName
-            )
-
-        UI.NotePlayer =
-            row.PlayerName
-
-        UI.MainFrame.NotesFrame.Title:SetText(
-            "Notes - " ..
-            row.PlayerName
-        )
-
-        UI.MainFrame.NotesFrame.EditBox:SetText(
-            player.notes or ""
-        )
-
+        UI.NotePlayer = row.PlayerName
+        UI.MainFrame.NotesFrame.Title:SetText("Notes - " .. row.PlayerName)
+        UI.MainFrame.NotesFrame.EditBox:SetText(player.notes or "")
         UI.MainFrame.NotesFrame:Show()
-
         UI.MainFrame.NotesFrame.EditBox:SetFocus()
+    end)
 
-    end
-)
+    row:SetScript("OnClick", function()
+        if UI.SelectedRow == row then
+            UI.SelectedRow = nil
+            UI.ExpandedPlayer = nil
+        else
+            UI.SelectedRow = row
+            UI.ExpandedPlayer = RolodexDB.Settings.AutoExpandSelectedPlayer
+                and row.PlayerName
+                or nil
+        end
+        UI:Refresh()
+    end)
 
     return row
 end
@@ -378,43 +352,10 @@ function BusinessCard:Refresh(
 
     end
 
-    -- Highlight
-    -- =====================================================
-if playerName == UI.ExpandedPlayer then
-
-    row.NameText:SetTextColor(
-        1,
-        1,
-        0
-    )
-
-else
-
-    row.NameText:SetTextColor(
-        1,
-        1,
-        1
-    )
-
-end
-
-
-row:SetScript("OnClick", function()
-    if UI.SelectedRow == row then
-        UI.SelectedRow = nil
-        UI.ExpandedPlayer = nil
+    -- Highlight the expanded row.
+    if playerName == UI.ExpandedPlayer then
+        row.NameText:SetTextColor(1, 1, 0)
     else
-        UI.SelectedRow = row
-        if RolodexDB.Settings.AutoExpandSelectedPlayer then
-            UI.ExpandedPlayer =
-                row.PlayerName
-        else
-            UI.ExpandedPlayer = nil
-        end
+        row.NameText:SetTextColor(1, 1, 1)
     end
-    UI:Refresh()
-end)
-
-    return row
-
 end
