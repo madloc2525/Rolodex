@@ -70,6 +70,8 @@ function Settings:Create()
         { name = "BusinessCards", label = "Business Cards" },
         { name = "DetailCards", label = "Detail Cards" },
         { name = "Database", label = "Database" },
+        { name = "Skins", label = "Skins" },
+        { name = "Advanced", label = "Advanced" },
     }
 
     for index, tabInfo in ipairs(tabs) do
@@ -225,6 +227,18 @@ function Settings:Create()
             end
         end
     )
+
+    -- Reserved for settings planned for future releases.
+    for _, panelName in ipairs({ "Skins", "Advanced" }) do
+        local panel = CreateFrame("Frame", nil, frame.Content)
+        frame.Panels[panelName] = panel
+        panel:SetAllPoints()
+        panel:Hide()
+
+        local placeholder = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        placeholder:SetPoint("TOPLEFT", 10, -10)
+        placeholder:SetText(panelName .. " settings are planned for a future release.")
+    end
 
     self.Frame = frame
     self:ShowPanel("General")
