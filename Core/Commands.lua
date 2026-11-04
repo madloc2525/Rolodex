@@ -237,21 +237,10 @@ SlashCmdList["ROLODEXDELETE"] = function(msg)
 end
 
 SLASH_ROLODEXWIPE1 = "/rolodexwipe"
-
 SlashCmdList["ROLODEXWIPE"] = function()
-
-    RolodexDB.players = {}
-
-    Rolodex:DebugPrint(
-        "Rolodex database wiped."
-    )
-
-    if Rolodex.UI then
-        Rolodex.UI.SelectedPlayer = nil
-        Rolodex.UI:RefreshPlayerList()
-    end
-
+    Rolodex.DB:WipeDatabase()
 end
+
 
 -- ============================================================================
 -- End Commands.lua

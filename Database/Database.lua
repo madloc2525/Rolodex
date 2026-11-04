@@ -240,17 +240,29 @@ end
 
 
 
--- Delete Player
+-- Delete Player and wipe database
 -- ----------------------------------------------------------------------------------
 
 function DB:DeletePlayer(name)
-
     if not name then
         return
     end
-
     RolodexDB.players[name] = nil
+end
 
+function DB:WipeDatabase()
+    RolodexDB.players = {}
+    if addon.UI then
+        addon.UI.ExpandedPlayer = nil
+        addon.UI.SelectedRow = nil
+        if addon.UI.Refresh then
+            addon.UI:Refresh()
+        elseif addon.UI.RefreshPlayerList then
+            addon.UI:RefreshPlayerList()
+        end
+    end
+    addon.ActiveSession = {}
+    addon:DebugPrint("Rolodex database wiped.")
 end
 
 

@@ -424,6 +424,65 @@ frame.Panels.BusinessCards = CreateFrame("Frame",nil,frame.Content)
     -- Database Settings
     -- =============================================================================================================================================================================
     frame.Panels.Database = CreateFrame("Frame",nil,frame.Content)
+    -- Number of entries in database
+    frame.Panels.Database.EntryCountText = frame.Panels.Database:CreateFontString(nil,"OVERLAY","GameFontNormal")
+    frame.Panels.Database.EntryCountText:SetPoint("TOPLEFT",10,-10)
+    frame.Panels.Database.ConfirmDatabaseWipeCheckbox = CreateFrame("CheckButton",nil,frame.Panels.Database,"UICheckButtonTemplate")
+    frame.Panels.Database.ConfirmDatabaseWipeCheckbox:SetPoint("TOPLEFT",10,-32)
+    frame.Panels.Database.ConfirmDatabaseWipeCheckbox:SetChecked(RolodexDB.Settings.ConfirmDatabaseWipe)
+    local confirmWipeLabel = frame.Panels.Database:CreateFontString(nil,"OVERLAY","GameFontNormal")
+    confirmWipeLabel:SetPoint("LEFT",frame.Panels.Database.ConfirmDatabaseWipeCheckbox,"RIGHT",4,0)
+    confirmWipeLabel:SetText("Confirm Before Wiping Database")
+    frame.Panels.Database.ConfirmDatabaseWipeCheckbox:SetScript(
+        "OnClick",
+        function(self)
+            RolodexDB.Settings.ConfirmDatabaseWipe = self:GetChecked() and true or false
+        end
+    )
+
+    StaticPopupDialogs["ROLODEX_CONFIRM_WIPE"] = {
+        text = "This will permanently delete all Rolodex player data. Are you sure?",
+        button1 = YES,
+        button2 = CANCEL,
+        OnAccept = function()
+            addon.DB:WipeDatabase()
+            Settings:RefreshDatabasePanel()
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+
+    frame.Panels.Database.WipeDatabaseButton = CreateFrame("Button",nil,frame.Panels.Database,"UIPanelButtonTemplate")
+    frame.Panels.Database.WipeDatabaseButton:SetSize(180,24)
+    frame.Panels.Database.WipeDatabaseButton:SetPoint("TOPLEFT",10,-62)
+    frame.Panels.Database.WipeDatabaseButton:SetText("Wipe Database")
+    frame.Panels.Database.WipeDatabaseButton:SetScript(
+        "OnClick",
+        function()
+            if RolodexDB.Settings.ConfirmDatabaseWipe then
+                StaticPopup_Show("ROLODEX_CONFIRM_WIPE")
+            else
+                addon.DB:WipeDatabase()
+                Settings:RefreshDatabasePanel()
+            end
+        end
+    )
+
+    -- Export database button
+    frame.Panels.Database.ExportButton = CreateFrame("Button",nil,frame.Panels.Database,"UIPanelButtonTemplate")
+    frame.Panels.Database.ExportButton:SetSize(180,24)
+    frame.Panels.Database.ExportButton:SetPoint("TOPLEFT",10,-96)
+    frame.Panels.Database.ExportButton:SetText("Export Database")
+    frame.Panels.Database.ExportButton:SetScript("OnClick",function()addon:DebugPrint("Export not yet implemented.")end)
+    -- Import database button
+    frame.Panels.Database.ImportButton = CreateFrame("Button",nil,frame.Panels.Database,"UIPanelButtonTemplate")
+    frame.Panels.Database.ImportButton:SetSize(180,24)
+    frame.Panels.Database.ImportButton:SetPoint("TOPLEFT",10,-130)
+    frame.Panels.Database.ImportButton:SetText("Import Database")
+    frame.Panels.Database.ImportButton:SetScript("OnClick",function()addon:DebugPrint("Import not yet implemented.")end)
+
     frame.Panels.Database:SetAllPoints()
     frame.Panels.Database:Hide()
 
@@ -458,6 +517,15 @@ function Settings:Toggle()
 
 end
 
+function Settings:RefreshDatabasePanel()
+    local panel = self.Frame and self.Frame.Panels.Database
+    if panel and panel.EntryCountText then
+        panel.EntryCountText:SetText(
+            "Entries in Rolodex database: " .. addon.DB:GetPlayerCount()
+        )
+    end
+end
+
 function Settings:ShowPanel(panelName)
 
     local frame = self.Frame
@@ -487,6 +555,10 @@ function Settings:ShowPanel(panelName)
 
         frame.Panels[panelName]:Show()
 
+    end
+
+    if panelName == "Database" then
+        self:RefreshDatabasePanel()
     end
 
     -- Highlight selected tab
