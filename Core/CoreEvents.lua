@@ -13,7 +13,7 @@
 -- WIP:
 --
 -- - Session tracking.
--- - Run history.
+-- - Group history.
 -- - Queue rating prompts.
 --
 -- ============================================================================
@@ -85,11 +85,21 @@ function addon:GROUP_ROSTER_UPDATE()
             "Session ended."
         )
 
+        for name in pairs(addon.ActiveSession) do
+            addon.DB:AddGroup(name)
+        end
+
         if addon.UI
         and addon.UI.RatingPrompt
         and addon.UI.RatingPrompt.Show
         and addon.DB:GetSetting("EnableRatingPrompt") then
             addon.UI.RatingPrompt:Show()
+        end
+
+        addon.ActiveSession = {}
+
+        if addon.UI and addon.UI.Refresh then
+            addon.UI:Refresh()
         end
 
     end

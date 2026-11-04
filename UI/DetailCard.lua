@@ -37,7 +37,7 @@ function DetailCard:Create(parent)
         parent
     )
 
-    card:SetSize(470, 200)
+    card:SetSize(480, 240)
     card:SetFrameStrata("HIGH")
     card:SetFrameLevel(100)
     card:Hide()
@@ -48,20 +48,31 @@ function DetailCard:Create(parent)
     addon.UI.ThemePaper:Apply(card)
     -- addon.UI.DetailCardTheme:Apply(card)
 
-    --Hide blizzard art
     -- Notes
-    card.NotesText = CreateText(
+    card.NotesHeader = CreateText(
         card,
-        "GameFontNormalSmall",
+        "GameFontHighlight",
         "TOPLEFT",
         card,
         12,
         -30
-        )
+    )
+    card.NotesHeader:SetText("Notes")
+    addon.UI.Theme:ApplyHeaderStyle(card.NotesHeader)
+
+    card.NotesText = CreateText(
+        card,
+        "GameFontNormalSmall",
+        "TOPLEFT",
+        card.NotesHeader,
+        "BOTTOMLEFT",
+        0,
+        -5
+    )
     addon.UI.Theme:ApplyBodyStyle(
         card.NotesText
     )
-    card.NotesText:SetWidth(560)
+    card.NotesText:SetWidth(450)
     card.NotesText:SetJustifyH("LEFT")
 
 -- Divider
@@ -75,7 +86,7 @@ card.Divider =
 
 
 card.Divider:SetSize(
-    500,
+    450,
     0
 )
 
@@ -189,7 +200,7 @@ card.RatingHeader =
         "TOPLEFT",
         card.Divider,
         "BOTTOMLEFT",
-        180,
+        150,
         -10
     )
 
@@ -215,66 +226,21 @@ addon.UI.Theme:ApplyBodyStyle(
 
 -- History Column
 
-card.HistoryHeader =
-    CreateText(
-        card,
-        "GameFontHighlight",
-        "TOPLEFT",
-        card.Divider,
-        "BOTTOMLEFT",
-        360,
-        -10
-    )
+    card.HistoryHeader = CreateText(card,"GameFontHighlight","TOPLEFT",card.Divider,"BOTTOMLEFT",300,-10)
+    card.HistoryHeader:SetText("Group History")
 
-card.HistoryHeader:SetText(
-    "History"
-)
-addon.UI.Theme:ApplyHeaderStyle(
-    card.HistoryHeader
-)
+    addon.UI.Theme:ApplyHeaderStyle(card.HistoryHeader)
 
-card.FirstSeenText =
-    CreateText(
-        card,
-        "GameFontNormal",
-        "TOPLEFT",
-        card.HistoryHeader,
-        "BOTTOMLEFT",
-        0,
-        -10
-    )
-
-addon.UI.Theme:ApplyBodyStyle(
-    card.FirstSeenText
-)
-
-card.LastSeenText =
-    CreateText(
-        card,
-        "GameFontNormal",
-        "TOPLEFT",
-        card.FirstSeenText,
-        "BOTTOMLEFT",
-        0,
-        -8
-    )
-addon.UI.Theme:ApplyBodyStyle(
-    card.LastSeenText
-)
-
-card.RunsHistoryText =
-    CreateText(
-        card,
-        "GameFontNormal",
-        "TOPLEFT",
-        card.LastSeenText,
-        "BOTTOMLEFT",
-        0,
-        -8
-    )
-addon.UI.Theme:ApplyBodyStyle(
-    card.RunsHistoryText
-)
+    -- Scroll Frame
+    card.HistoryScrollFrame = CreateFrame("ScrollFrame",nil,card,"UIPanelScrollFrameTemplate")
+    card.HistoryScrollFrame:SetPoint("TOPLEFT",card.HistoryHeader,"BOTTOMLEFT",0,-8)
+    card.HistoryScrollFrame:SetSize(170,150)
+    -- Content Frame
+    card.HistoryContent =CreateFrame("Frame",nil,card.HistoryScrollFrame)
+    card.HistoryContent:SetSize(140,1)
+    card.HistoryScrollFrame:SetScrollChild(card.HistoryContent)
+    -- Cached rows
+    card.HistoryRows = {}
 
 
     -- Manual Rating Buttons
@@ -335,11 +301,53 @@ end
 -- ======================================================================
 function DetailCard:Refresh(card, player) 
 
-    local note = player.notes or ""
-    if note == "" then
-        note = "No notes recorded."
+    local settings = RolodexDB.Settings
+
+    if settings.ShowNotes then
+        local note = player.notes or ""
+        if note == "" then
+            note = "No notes recorded."
+        end
+        card.NotesText:SetText(note)
+        card.NotesHeader:Show()
+        card.NotesText:Show()
+        card.Divider:ClearAllPoints()
+        card.Divider:SetPoint(
+            "TOPLEFT",
+            card.NotesText,
+            "BOTTOMLEFT",
+            0,
+            -10
+        )
+    else
+        card.NotesHeader:Hide()
+        card.NotesText:Hide()
+        card.Divider:ClearAllPoints()
+        card.Divider:SetPoint(
+            "TOPLEFT",
+            card,
+            "TOPLEFT",
+            12,
+            -40
+        )
     end
-    card.NotesText:SetText("Notes:\n" .. note)
+
+    local showCharacterSection = not not settings.ShowCharacterSection
+    card.CharacterHeader:SetShown(showCharacterSection)
+    card.LastLevelText:SetShown(showCharacterSection)
+    card.LastRoleLabel:SetShown(showCharacterSection)
+    card.LastRoleValue:SetShown(showCharacterSection)
+    card.DeletePlayerButton:SetShown(showCharacterSection)
+
+    local showRatingSection = not not settings.ShowRatingSection
+    local showManualRating = showRatingSection and not not settings.EnableManualRating
+    local showRatingHistory = showRatingSection and not not settings.ShowRatingHistory
+    card.RatingHeader:SetShown(showRatingSection)
+    card.CurrentRatingText:SetShown(showRatingSection)
+    card.Rating1Button:SetShown(showManualRating)
+    card.Rating2Button:SetShown(showManualRating)
+    card.Rating3Button:SetShown(showManualRating)
+    card.LastRatingText:SetShown(showRatingHistory)
 
     card.LastLevelText:SetText(
         "Last Level: " .. tostring(player.lastSeenLevel or "-")
@@ -373,12 +381,48 @@ function DetailCard:Refresh(card, player)
     card.LastRatingText:SetText(
         "Last Rating: " .. tostring(addon.DB:GetLastRating(player.name) or "-")
     )
+    local history = addon.DB:GetGroupHistory(player.name)
+    local rowIndex = 1
+    for i = #history, 1, -1 do
+        local entry = history[i]
+        local timestamp = type(entry) == "table"
+            and entry.timestamp
+            or entry
+        local row = card.HistoryRows[rowIndex]
 
-    card.FirstSeenText:SetText(
-        "First Seen:\n" .. addon:FormatTimestamp(player.firstSeen)
+        if not row then
+            row = CreateText(
+                card.HistoryContent,
+                "GameFontNormal",
+                "TOPLEFT",
+                card.HistoryContent,
+                "TOPLEFT",
+                0,
+                -((rowIndex - 1) * 18)
+            )
+            addon.UI.Theme:ApplyBodyStyle(row)
+            card.HistoryRows[rowIndex] = row
+        end
+
+        row:SetText(
+            date(
+                "%d %b %Y %H:%M",
+                timestamp
+            )
+        )
+        row:Show()
+        rowIndex = rowIndex + 1
+    end
+
+    for i = rowIndex, #card.HistoryRows do
+        card.HistoryRows[i]:Hide()
+    end
+
+    card.HistoryContent:SetHeight(
+        math.max(1, (#history * 18))
     )
-    card.LastSeenText:SetText(
-        "Last Seen:\n" .. addon:FormatTimestamp(player.lastSeen)
-    )
-    card.RunsHistoryText:SetText("Runs: " .. tostring(player.runs or 0))
+
+    card.HistoryHeader:SetShown(settings.ShowGroupHistory)
+    card.HistoryScrollFrame:SetShown(settings.ShowGroupHistory)
+
 end

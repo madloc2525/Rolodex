@@ -117,8 +117,8 @@ TooltipDataProcessor.AddTooltipPostCall(
         end
 
             tooltip:AddLine(
-                "Runs: " ..
-                tostring(player.runs or 0),
+                "Groups: " ..
+                tostring(player.groups or 0),
                 1,
                 1,
                 1

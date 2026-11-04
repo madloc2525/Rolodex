@@ -213,7 +213,7 @@ function UI:CreateMainFrame()
         CLASS = "Class",
         GUILD = "Guild",
         RATING = "Rating",
-        RUNS = "Runs"
+        GROUPS = "Groups"
     }
 
     frame.SortButton:SetText("Sort: " .. sortLabels[UI.SortMode])
@@ -235,7 +235,7 @@ function UI:CreateMainFrame()
 
             elseif UI.SortMode == "RATING" then
 
-                UI.SortMode = "RUNS"
+                UI.SortMode = "GROUPS"
 
             else
 
@@ -318,7 +318,7 @@ function UI:CreateMainFrame()
         { name = "Class", x = 205, setting = "ShowClass" },
         { name = "Guild", x = 285, setting = "ShowGuild" },
         { name = "Rating", x = 425, setting = "ShowAverageRating" },
-        { name = "Runs", x = 475, setting = "ShowRuns" },
+        { name = "Groups", x = 475, setting = "ShowGroups" },
         { name = "Notes", x = 525 }
     }
 
@@ -701,7 +701,7 @@ frame.DetailCard =
         configureColumn("Class", "ShowClass", "ClassText", 80)
         configureColumn("Guild", "ShowGuild", "GuildText", 125)
         configureColumn("Rating", "ShowAverageRating", "RatingText", 45)
-        configureColumn("Runs", "ShowRuns", "RunsText", 45)
+        configureColumn("Groups", "ShowGroups", "GroupsText", 45)
 
         setRowAnchor("NoteButton", cursor)
         setHeaderAnchor("Notes", cursor + 25)
@@ -772,12 +772,12 @@ function UI:RefreshPlayerList()
                 if ratingA ~= ratingB then
                     return ratingA > ratingB
                 end
-            elseif self.SortMode == "RUNS" then
-                local runsA = playerA.runs or 0
-                local runsB = playerB.runs or 0
+            elseif self.SortMode == "GROUPS" then
+                local groupsA = playerA.groups or 0
+                local groupsB = playerB.groups or 0
 
-                if runsA ~= runsB then
-                    return runsA > runsB
+                if groupsA ~= groupsB then
+                    return groupsA > groupsB
                 end
             elseif self.SortMode == "GUILD" then
                 local guildA = playerA.guild or ""

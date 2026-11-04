@@ -92,9 +92,13 @@ SlashCmdList["ROLODEXTEST"] = function()
         3
     )
 
-    addon.DB:IncrementRuns(
+    addon.DB:IncrementGroups(
         "Tankadin"
     )
+
+    if addon.UI and addon.UI.Refresh then
+        addon.UI:Refresh()
+    end
 
     addon:DebugPrint("Test player created.")
 
@@ -133,7 +137,7 @@ SlashCmdList["ROLODEXSHOW"] = function(msg)
     addon:DebugPrint("Class: " .. player.class)
     addon:DebugPrint("Guild: " .. player.guild)
     addon:DebugPrint("Level: " .. player.level)
-    addon:DebugPrint("Runs: " .. player.runs)
+    addon:DebugPrint("Groups: " .. player.groups)
 
     addon:DebugPrint(
         string.format(

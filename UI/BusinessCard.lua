@@ -163,14 +163,14 @@ function BusinessCard:Create(parent, index)
     )
 
     row.RatingText:SetPoint("LEFT", row, "LEFT", 400, 0)
-    -- Runs together
-    row.RunsText = row:CreateFontString(
+    -- Groups together
+    row.GroupsText = row:CreateFontString(
     nil,
     "OVERLAY",
     "GameFontNormal"
     )
 
-    row.RunsText:SetPoint("LEFT", row, "LEFT", 450, 0)
+    row.GroupsText:SetPoint("LEFT", row, "LEFT", 450, 0)
     -- Note
     row.NoteButton = CreateFrame(
     "Button",
@@ -345,19 +345,19 @@ function BusinessCard:Refresh(
         row.RatingText:Hide()
     end
 
-    -- Runs
+    -- Groups
     -- =====================================================
 
-    row.RunsText:SetText(
+    row.GroupsText:SetText(
         tostring(
-            player.runs or 0
+            player.groups or 0
         )
     )
 
-    if addon.DB:GetSetting("ShowRuns") then
-        row.RunsText:Show()
+    if addon.DB:GetSetting("ShowGroups") then
+        row.GroupsText:Show()
     else
-        row.RunsText:Hide()
+        row.GroupsText:Hide()
     end
 
     -- Notes Indicator

@@ -22,7 +22,7 @@ local DB = addon.DB
 -- Constants
 -- ---------------------------------------------------------------------------
 
-DB.VERSION = 1
+DB.VERSION = 2
 
 -- Settings
 DB.DEFAULT_SETTINGS = {
@@ -39,7 +39,7 @@ DB.DEFAULT_SETTINGS = {
     ShowGuild = true,
     ShowLevel = true,
     ShowRole = true,
-    ShowRuns = true,
+    ShowGroups = true,
     ShowAverageRating = true,
     HighlightSelectedRow = true,
     ShowFavoritesFirst = false,
@@ -49,9 +49,8 @@ DB.DEFAULT_SETTINGS = {
     ShowNotes = true,
     ShowCharacterSection = true,
     ShowRatingSection = true,
-    ShowHistorySection = true,
+    ShowGroupHistory = true,
     ShowRatingHistory = true,
-    ShowRunsHistory = true,
     ShowRatingButtons = true,
     EnableManualRating= true,
     -- Database
@@ -86,6 +85,27 @@ function DB:Initialize()
     RolodexDB.Settings =
         RolodexDB.Settings or {}
 
+    local settings = RolodexDB.Settings
+    if settings.ShowGroups == nil then
+        settings.ShowGroups = settings.ShowRuns
+    end
+    if settings.ShowGroupHistory == nil then
+        local showHistorySection = settings.ShowHistorySection
+        if showHistorySection == nil then
+            showHistorySection = DB.DEFAULT_SETTINGS.ShowGroupHistory
+        end
+
+        local showGroupHistory = settings.ShowRunsHistory
+        if showGroupHistory == nil then
+            showGroupHistory = DB.DEFAULT_SETTINGS.ShowGroupHistory
+        end
+
+        settings.ShowGroupHistory = showHistorySection and showGroupHistory
+    end
+    settings.ShowRuns = nil
+    settings.ShowHistorySection = nil
+    settings.ShowRunsHistory = nil
+
     for key, value in pairs(
         DB.DEFAULT_SETTINGS
     ) do
@@ -97,6 +117,19 @@ function DB:Initialize()
         end
 
     end
+
+    for _, player in pairs(RolodexDB.players) do
+        player.groups = player.groups or player.runs or 0
+        player.groupHistory = player.groupHistory or player.runHistory or {}
+        player.firstGroupTogether = player.firstGroupTogether or player.firstRunTogether
+        player.lastGroupTogether = player.lastGroupTogether or player.lastRunTogether
+
+        player.runs = nil
+        player.runHistory = nil
+        player.firstRunTogether = nil
+        player.lastRunTogether = nil
+    end
+    RolodexDB.version = math.max(RolodexDB.version or 0, DB.VERSION)
 
     addon:DebugPrint(
         "Database initialized."
@@ -133,28 +166,29 @@ function DB:CreatePlayer(name)
 
     local player = {
 
-        name = name,
+    name = name,
 
-        class = "UNKNOWN",
-        guild = "",
-        lastSeenLevel = 0,
-        lastSeenSpec = "Unknown",
+    class = "UNKNOWN",
+    guild = "",
+    lastSeenLevel = 0,
+    lastSeenSpec = "Unknown",
 
-        firstRunTogether = time(),
+    firstGroupTogether = time(),
+    lastGroupTogether = time(),
 
-        lastRunTogether = time(),
+    firstSeen = time(),
+    lastSeen = time(),
 
-        firstSeen = time(),
-        lastSeen = time(),
+    groups = 0,
 
-        runs = 0,
+    groupHistory = {},
 
-        favorite = false,
-        avoid = false,
+    favorite = false,
+    avoid = false,
 
-        notes = "",
+    notes = "",
 
-        ratings = {}
+    ratings = {}
     }
 
     RolodexDB.players[name] = player
@@ -290,20 +324,58 @@ function DB:SetLastSeenSpec(name, spec)
 
 end
 
-function DB:SetLastRunTogether(name)
+function DB:SetLastGroupTogether(name)
 
     local player = self:GetOrCreatePlayer(name)
 
-    player.lastRunTogether = time()
-
+    player.lastGroupTogether = time()
 end
 
-function DB:IncrementRuns(name)
+function DB:IncrementGroups(name)
+    local player =
+        self:GetOrCreatePlayer(name)
+    local now =
+        time()
+    player.groupHistory = player.groupHistory or {}
+    player.groups =
+        (player.groups or 0) + 1
+    player.lastGroupTogether =
+        now
+    table.insert(
+        player.groupHistory,
+        {
+            timestamp = now
+        }
+    )
+end
+-- Get Group History (and str)
+function DB:GetGroupHistory(name)
+    local player =
+        self:GetPlayer(name)
+    if not player then
+        return {}
+    end
+    return player.groupHistory or {}
+end
 
-    local player = self:GetOrCreatePlayer(name)
+function DB:GetGroupHistoryStrings(name)
+    local history =
+        self:GetGroupHistory(name)
 
-    player.runs = player.runs + 1
-
+    local result = {}
+    for _, entry in ipairs(history) do
+        local timestamp = type(entry) == "table"
+            and entry.timestamp
+            or entry
+        table.insert(
+            result,
+            date(
+                "%d %b %Y %H:%M",
+                timestamp
+            )
+        )
+    end
+    return result
 end
 
 -- Notes on Players
@@ -545,6 +617,28 @@ function DB:GetPlayerByFirstName(firstName)
 
 end
 
+-- Get group sessions with timestamp for history column
+function DB:AddGroup(name)
+
+    local player =
+        self:GetOrCreatePlayer(name)
+    local now = time()
+
+    player.groupHistory = player.groupHistory or {}
+    player.groups =
+        (player.groups or 0) + 1
+
+    player.lastGroupTogether =
+        now
+
+    table.insert(
+        player.groupHistory,
+        {
+            timestamp = now
+        }
+    )
+
+end
 
 -- 
 -- Debug (temp)
@@ -560,7 +654,7 @@ function DB:DebugPlayer(name)
     end
 
     addon:DebugPrint("Name: " .. player.name)
-    addon:DebugPrint("Runs: " .. player.runs)
+    addon:DebugPrint("Groups: " .. player.groups)
     addon:DebugPrint("Average Rating: " .. string.format("%.2f", self:GetAverageRating(name)))
     addon:DebugPrint("Favorite: " .. tostring(player.favorite))
     addon:DebugPrint("Avoid: " .. tostring(player.avoid))

@@ -309,17 +309,17 @@ frame.Panels.BusinessCards = CreateFrame("Frame",nil,frame.Content)
         addon.UI:Refresh()
     end)
 
-    -- Show Runs
-    frame.Panels.BusinessCards.ShowRunsCheckbox = CreateFrame("CheckButton", nil, frame.Panels.BusinessCards,"UICheckButtonTemplate")
-    frame.Panels.BusinessCards.ShowRunsCheckbox:SetPoint("TOPLEFT",10,-180)
-    frame.Panels.BusinessCards.ShowRunsCheckbox:SetChecked(RolodexDB.Settings.ShowRuns)
-    local showRunsLabel =
+    -- Show Groups
+    frame.Panels.BusinessCards.ShowGroupsCheckbox = CreateFrame("CheckButton", nil, frame.Panels.BusinessCards,"UICheckButtonTemplate")
+    frame.Panels.BusinessCards.ShowGroupsCheckbox:SetPoint("TOPLEFT",10,-180)
+    frame.Panels.BusinessCards.ShowGroupsCheckbox:SetChecked(RolodexDB.Settings.ShowGroups)
+    local showGroupsLabel =
     frame.Panels.BusinessCards:CreateFontString(nil,"OVERLAY","GameFontNormal")
-    showRunsLabel:SetPoint("LEFT",frame.Panels.BusinessCards.ShowRunsCheckbox,"RIGHT",4,0)
-    showRunsLabel:SetText("Show Runs")
-    frame.Panels.BusinessCards.ShowRunsCheckbox:SetScript("OnClick",
+    showGroupsLabel:SetPoint("LEFT",frame.Panels.BusinessCards.ShowGroupsCheckbox,"RIGHT",4,0)
+    showGroupsLabel:SetText("Show Groups")
+    frame.Panels.BusinessCards.ShowGroupsCheckbox:SetScript("OnClick",
     function(self)
-        RolodexDB.Settings.ShowRuns =self:GetChecked()
+        RolodexDB.Settings.ShowGroups = self:GetChecked() and true or false
         addon.UI:Refresh()
     end)
 
@@ -333,6 +333,14 @@ frame.Panels.BusinessCards = CreateFrame("Frame",nil,frame.Content)
     local showNotesLabel =frame.Panels.DetailCards:CreateFontString(nil,"OVERLAY","GameFontNormal")
     showNotesLabel:SetPoint("LEFT",frame.Panels.DetailCards.ShowNotesCheckbox,"RIGHT",4,0)
     showNotesLabel:SetText("Show Notes")
+    frame.Panels.DetailCards.ShowNotesCheckbox:SetScript(
+        "OnClick",
+        function(self)
+            RolodexDB.Settings.ShowNotes = self:GetChecked() and true or false
+            addon.UI:Refresh()
+        end
+    )
+
     -- Show Character Column
     frame.Panels.DetailCards.ShowCharacterSectionCheckbox = CreateFrame("CheckButton",nil,frame.Panels.DetailCards,"UICheckButtonTemplate")
     frame.Panels.DetailCards.ShowCharacterSectionCheckbox:SetPoint("TOPLEFT",10,-50)
@@ -340,6 +348,14 @@ frame.Panels.BusinessCards = CreateFrame("Frame",nil,frame.Content)
     local showCharacterSectionLabel = frame.Panels.DetailCards:CreateFontString(nil,"OVERLAY","GameFontNormal")
     showCharacterSectionLabel:SetPoint("LEFT",frame.Panels.DetailCards.ShowCharacterSectionCheckbox,"RIGHT",4,0)
     showCharacterSectionLabel:SetText("Show Character Section")
+    frame.Panels.DetailCards.ShowCharacterSectionCheckbox:SetScript(
+        "OnClick",
+        function(self)
+            RolodexDB.Settings.ShowCharacterSection = self:GetChecked() and true or false
+            addon.UI:Refresh()
+        end
+    )
+
     -- Show Rating Column
     frame.Panels.DetailCards.ShowRatingSectionCheckbox = CreateFrame("CheckButton",nil,frame.Panels.DetailCards,"UICheckButtonTemplate")
     frame.Panels.DetailCards.ShowRatingSectionCheckbox:SetPoint("TOPLEFT",10,-80)
@@ -347,36 +363,60 @@ frame.Panels.BusinessCards = CreateFrame("Frame",nil,frame.Content)
     local showRatingSectionLabel = frame.Panels.DetailCards:CreateFontString(nil,"OVERLAY","GameFontNormal")
     showRatingSectionLabel:SetPoint("LEFT",frame.Panels.DetailCards.ShowRatingSectionCheckbox,"RIGHT",4,0)
     showRatingSectionLabel:SetText("Show Rating Section")
-    -- Show History Column
-    frame.Panels.DetailCards.ShowHistorySectionCheckbox = CreateFrame("CheckButton",nil,frame.Panels.DetailCards,"UICheckButtonTemplate")
-    frame.Panels.DetailCards.ShowHistorySectionCheckbox:SetPoint("TOPLEFT",10,-110)
-    frame.Panels.DetailCards.ShowHistorySectionCheckbox:SetChecked(RolodexDB.Settings.ShowHistorySection)
-    local showHistorySectionLabel = frame.Panels.DetailCards:CreateFontString(nil,"OVERLAY","GameFontNormal")
-    showHistorySectionLabel:SetPoint("LEFT",frame.Panels.DetailCards.ShowHistorySectionCheckbox,"RIGHT",4,0)
-    showHistorySectionLabel:SetText("Show History Section")
+    frame.Panels.DetailCards.ShowRatingSectionCheckbox:SetScript(
+        "OnClick",
+        function(self)
+            RolodexDB.Settings.ShowRatingSection = self:GetChecked() and true or false
+            addon.UI:Refresh()
+        end
+    )
+
     -- Show Rating History
     frame.Panels.DetailCards.ShowRatingHistoryCheckbox = CreateFrame("CheckButton",nil,frame.Panels.DetailCards,"UICheckButtonTemplate")
-    frame.Panels.DetailCards.ShowRatingHistoryCheckbox:SetPoint("TOPLEFT",10,-150)
+    frame.Panels.DetailCards.ShowRatingHistoryCheckbox:SetPoint("TOPLEFT",10,-110)
     frame.Panels.DetailCards.ShowRatingHistoryCheckbox:SetChecked(RolodexDB.Settings.ShowRatingHistory)
     local showRatingHistoryLabel =
     frame.Panels.DetailCards:CreateFontString(nil,"OVERLAY","GameFontNormal")
     showRatingHistoryLabel:SetPoint("LEFT",frame.Panels.DetailCards.ShowRatingHistoryCheckbox,"RIGHT",4,0)
     showRatingHistoryLabel:SetText("Show Rating History")
-    -- Show Runs History
-    frame.Panels.DetailCards.ShowRunsHistoryCheckbox = CreateFrame("CheckButton",nil,frame.Panels.DetailCards,"UICheckButtonTemplate")
-    frame.Panels.DetailCards.ShowRunsHistoryCheckbox:SetPoint("TOPLEFT",10,-180)
-    frame.Panels.DetailCards.ShowRunsHistoryCheckbox:SetChecked(RolodexDB.Settings.ShowRunsHistory)
-    local showRunsHistoryLabel =
+    frame.Panels.DetailCards.ShowRatingHistoryCheckbox:SetScript(
+        "OnClick",
+        function(self)
+            RolodexDB.Settings.ShowRatingHistory = self:GetChecked() and true or false
+            addon.UI:Refresh()
+        end
+    )
+
+    -- Show Group History
+    frame.Panels.DetailCards.ShowGroupHistoryCheckbox = CreateFrame("CheckButton",nil,frame.Panels.DetailCards,"UICheckButtonTemplate")
+    frame.Panels.DetailCards.ShowGroupHistoryCheckbox:SetPoint("TOPLEFT",10,-140)
+    frame.Panels.DetailCards.ShowGroupHistoryCheckbox:SetChecked(RolodexDB.Settings.ShowGroupHistory)
+    local showGroupHistoryLabel =
     frame.Panels.DetailCards:CreateFontString(nil,"OVERLAY","GameFontNormal")
-    showRunsHistoryLabel:SetPoint("LEFT",frame.Panels.DetailCards.ShowRunsHistoryCheckbox,"RIGHT",4,0)
-    showRunsHistoryLabel:SetText("Show Runs History")
+    showGroupHistoryLabel:SetPoint("LEFT",frame.Panels.DetailCards.ShowGroupHistoryCheckbox,"RIGHT",4,0)
+    showGroupHistoryLabel:SetText("Show Group History")
+    frame.Panels.DetailCards.ShowGroupHistoryCheckbox:SetScript(
+        "OnClick",
+        function(self)
+            RolodexDB.Settings.ShowGroupHistory = self:GetChecked() and true or false
+            addon.UI:Refresh()
+        end
+    )
+
     -- Enable Manual Rating
     frame.Panels.DetailCards.EnableManualRatingCheckbox = CreateFrame("CheckButton",nil,frame.Panels.DetailCards,"UICheckButtonTemplate")
-    frame.Panels.DetailCards.EnableManualRatingCheckbox:SetPoint("TOPLEFT",10,-220)
+    frame.Panels.DetailCards.EnableManualRatingCheckbox:SetPoint("TOPLEFT",10,-170)
     frame.Panels.DetailCards.EnableManualRatingCheckbox:SetChecked(RolodexDB.Settings.EnableManualRating)
     local enableManualRatingLabel = frame.Panels.DetailCards:CreateFontString(nil,"OVERLAY","GameFontNormal")
     enableManualRatingLabel:SetPoint("LEFT",frame.Panels.DetailCards.EnableManualRatingCheckbox,"RIGHT",4,0)
     enableManualRatingLabel:SetText("Enable Manual Rating")
+    frame.Panels.DetailCards.EnableManualRatingCheckbox:SetScript(
+        "OnClick",
+        function(self)
+            RolodexDB.Settings.EnableManualRating = self:GetChecked() and true or false
+            addon.UI:Refresh()
+        end
+    )
 
     frame.Panels.DetailCards:SetAllPoints()
     frame.Panels.DetailCards:Hide()
