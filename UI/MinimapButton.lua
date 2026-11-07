@@ -56,7 +56,7 @@ function MinimapButton:Create()
         )
 
     button.Icon:SetTexture(
-        "Interface\\AddOns\\Rolodex\\Media\\Icons\\MinimapIcon.png"
+        "Interface\\AddOns\\" .. addon.Name .. "\\Media\\Icons\\MinimapIcon.png"
     )
 
     button.Icon:SetSize(

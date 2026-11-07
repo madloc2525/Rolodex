@@ -77,13 +77,13 @@ TooltipDataProcessor.AddTooltipPostCall(
 
             ratingText =
                 ratingText ..
-                " (★)"
+                " |A:PetJournal-FavoritesIcon:12:12|a"
 
         elseif player.avoid then
 
             ratingText =
                 ratingText ..
-                " (⚠)"
+                " |A:common-icon-redx:12:12|a"
 
         end
 

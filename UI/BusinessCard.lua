@@ -26,18 +26,14 @@ function BusinessCard:Create(parent, index)
         -4 - ((index - 1) * 22)
     )
 
-    -- Favorite, avoid, or unflagged state
-    row.FlagText = row:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontNormal"
-    )
+    row.FlagLayer = CreateFrame("Frame", nil, row)
+    row.FlagLayer:SetSize(20, 20)
+    row.FlagLayer:SetPoint("CENTER", row, "LEFT", 22.5, 0)
+    row.FlagLayer:SetFrameLevel(row:GetFrameLevel() + 5)
 
-    row.FlagText:SetPoint(
-        "LEFT",
-        5,
-        0
-    )
+    row.FlagIcon = row.FlagLayer:CreateTexture(nil, "OVERLAY", nil, 7)
+    row.FlagIcon:SetSize(14, 14)
+    row.FlagIcon:SetPoint("CENTER")
 
     -- Flag toggle button
     row.FlagButton = CreateFrame(
@@ -51,13 +47,8 @@ function BusinessCard:Create(parent, index)
         20
     )
 
-    row.FlagButton:SetPoint(
-        "CENTER",
-        row.FlagText,
-        "CENTER",
-        0,
-        0
-    )
+    row.FlagButton:SetPoint("CENTER", row.FlagIcon)
+    row.FlagButton:SetFrameLevel(row.FlagLayer:GetFrameLevel() + 1)
     row.FlagButton:SetScript(
     "OnClick",
         function()
@@ -112,9 +103,12 @@ function BusinessCard:Create(parent, index)
 
     row.NameText:SetPoint(
         "LEFT",
-        25,
+        55,
         0
     )
+    row.NameText:SetWidth(175)
+    row.NameText:SetWordWrap(false)
+    row.NameText:SetJustifyH("LEFT")
     -- Class
     row.ClassText = row:CreateFontString(
         nil,
@@ -123,6 +117,7 @@ function BusinessCard:Create(parent, index)
     )
 
     row.ClassText:SetPoint("LEFT", row, "LEFT", 180, 0)
+    row.ClassText:SetJustifyH("LEFT")
     -- Guild
     row.GuildText = row:CreateFontString(
     nil,
@@ -131,6 +126,7 @@ function BusinessCard:Create(parent, index)
     )
 
     row.GuildText:SetPoint("LEFT", row, "LEFT", 260, 0)
+    row.GuildText:SetJustifyH("LEFT")
     -- Rating
     row.RatingText = row:CreateFontString(
     nil,
@@ -139,6 +135,8 @@ function BusinessCard:Create(parent, index)
     )
 
     row.RatingText:SetPoint("LEFT", row, "LEFT", 400, 0)
+    row.RatingText:SetWidth(75)
+    row.RatingText:SetJustifyH("CENTER")
     -- Groups together
     row.GroupsText = row:CreateFontString(
     nil,
@@ -147,6 +145,16 @@ function BusinessCard:Create(parent, index)
     )
 
     row.GroupsText:SetPoint("LEFT", row, "LEFT", 450, 0)
+    row.GroupsText:SetWidth(75)
+    row.GroupsText:SetJustifyH("CENTER")
+    row.MostRecentText = row:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontNormalSmall"
+    )
+    row.MostRecentText:SetPoint("LEFT", row, "LEFT", 500, 0)
+    row.MostRecentText:SetWidth(105)
+    row.MostRecentText:SetJustifyH("CENTER")
     -- Note
     row.NoteButton = CreateFrame(
     "Button",
@@ -159,18 +167,12 @@ function BusinessCard:Create(parent, index)
         20
     )
 
-    row.NoteButton:SetPoint("LEFT", row, "LEFT", 500, 0)
+    row.NoteButton:SetPoint("CENTER", row, "LEFT", 522.5, 0)
 
-    row.NoteButton.Text =
-        row.NoteButton:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontNormal"
-        )
-
-    row.NoteButton.Text:SetAllPoints()
-
-    row.NoteButton.Text:SetText("✎")
+    row.NoteButton.Icon = row.NoteButton:CreateTexture(nil, "ARTWORK")
+    row.NoteButton.Icon:SetSize(14, 14)
+    row.NoteButton.Icon:SetPoint("CENTER")
+    row.NoteButton.Icon:SetTexture("Interface\\Buttons\\UI-GuildButton-PublicNote-Up")
 
     row.NoteButton:SetScript("OnClick", function()
         local player = addon.DB:GetPlayer(row.PlayerName)
@@ -185,7 +187,13 @@ function BusinessCard:Create(parent, index)
         UI.MainFrame.NotesFrame.EditBox:SetFocus()
     end)
 
-    row:SetScript("OnClick", function()
+    row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    row:SetScript("OnClick", function(_, button)
+        if button == "RightButton" then
+            UI:OpenPlayerContextMenu(row.PlayerName)
+            return
+        end
+
         if UI.SelectedRow == row then
             UI.SelectedRow = nil
             UI.ExpandedPlayer = nil
@@ -197,6 +205,16 @@ function BusinessCard:Create(parent, index)
         end
         UI:Refresh()
     end)
+
+    row:SetScript("OnEnter", function(self)
+        self.ThemeHovered = true
+        UI.Theme:ApplyRowStyle(self)
+    end)
+    row:SetScript("OnLeave", function(self)
+        self.ThemeHovered = false
+        UI.Theme:ApplyRowStyle(self)
+    end)
+    UI.Theme:ApplyRowStyle(row)
 
     return row
 end
@@ -211,36 +229,18 @@ function BusinessCard:Refresh(
     -- =====================================================
 
     if player.favorite then
-
-        row.FlagText:SetText("★")
-
-        row.FlagText:SetTextColor(
-            1,
-            1,
-            0
-        )
-
+        row.FlagIcon:SetAtlas("PetJournal-FavoritesIcon")
+        row.FlagIcon:SetVertexColor(1, 0.82, 0.15)
+        row.FlagIcon:Show()
     elseif player.avoid then
-
-        row.FlagText:SetText("⚠")
-
-        row.FlagText:SetTextColor(
-            1,
-            0.2,
-            0.2
-        )
-
+        row.FlagIcon:SetAtlas("common-icon-redx")
+        row.FlagIcon:SetVertexColor(1, 0.3, 0.3)
+        row.FlagIcon:Show()
     else
-
-        row.FlagText:SetText("·")
-
-        row.FlagText:SetTextColor(
-            0.5,
-            0.5,
-            0.5
-        )
-
+        row.FlagIcon:Hide()
     end
+    row.FlagLayer:SetFrameLevel(row:GetFrameLevel() + 5)
+    row.FlagButton:SetFrameLevel(row.FlagLayer:GetFrameLevel() + 1)
 
     -- Name
     -- =====================================================
@@ -248,6 +248,11 @@ function BusinessCard:Refresh(
     row.NameText:SetText(
         player.name or ""
     )
+    local bodyR, bodyG, bodyB
+    if not addon.UI.Theme:IsClassicTheme() then
+        bodyR, bodyG, bodyB = addon.UI.Theme:GetColor("ListText")
+        row.NameText:SetTextColor(bodyR, bodyG, bodyB)
+    end
 
     -- Class
     -- =====================================================
@@ -277,7 +282,7 @@ function BusinessCard:Refresh(
             classColor.b
         )
 
-    else
+    elseif not addon.UI.Theme:IsClassicTheme() then
 
         row.ClassText:SetTextColor(
             1,
@@ -290,9 +295,11 @@ function BusinessCard:Refresh(
     -- Guild
     -- =====================================================
 
-    row.GuildText:SetText(
-        player.guild or "-"
-    )
+    local guild = player.guild
+    row.GuildText:SetText(guild and guild ~= "" and guild or "-")
+    if bodyR then
+        row.GuildText:SetTextColor(bodyR, bodyG, bodyB)
+    end
 
     if addon.DB:GetSetting("ShowGuild") then
         row.GuildText:Show()
@@ -312,6 +319,9 @@ function BusinessCard:Refresh(
             string.format("%.1f", averageRating)
         )
     end
+    if bodyR then
+        row.RatingText:SetTextColor(bodyR, bodyG, bodyB)
+    end
 
     if addon.DB:GetSetting("ShowAverageRating") then
         row.RatingText:Show()
@@ -327,11 +337,32 @@ function BusinessCard:Refresh(
             player.groups or 0
         )
     )
+    if bodyR then
+        row.GroupsText:SetTextColor(bodyR, bodyG, bodyB)
+    end
 
     if addon.DB:GetSetting("ShowGroups") then
         row.GroupsText:Show()
     else
         row.GroupsText:Hide()
+    end
+
+    local mostRecent = player.lastGroupTogether or 0
+    if mostRecent <= 0 then
+        mostRecent = player.lastSeen or 0
+    end
+    if addon.DB:GetSetting("ShowMostRecent") and (player.groups or 0) > 0 and mostRecent > 0 then
+        row.MostRecentText:SetText(date("%d %b %Y", mostRecent))
+        if bodyR then
+            row.MostRecentText:SetTextColor(bodyR, bodyG, bodyB)
+        end
+        row.MostRecentText:Show()
+    else
+        row.MostRecentText:SetText("-")
+        if bodyR then
+            row.MostRecentText:SetTextColor(bodyR, bodyG, bodyB)
+        end
+        row.MostRecentText:SetShown(addon.DB:GetSetting("ShowMostRecent"))
     end
 
     -- Notes Indicator
@@ -340,22 +371,19 @@ function BusinessCard:Refresh(
     if player.notes
     and player.notes ~= "" then
 
-        row.NoteButton.Text:SetText(
-            "📝"
-        )
-
+        row.NoteButton.Icon:SetVertexColor(1, 0.82, 0.42, 1)
     else
-
-        row.NoteButton.Text:SetText(
-            "✎"
-        )
-
+        row.NoteButton.Icon:SetVertexColor(0.65, 0.65, 0.65, 0.55)
     end
 
     -- Highlight the expanded row.
-    if playerName == UI.ExpandedPlayer then
-        row.NameText:SetTextColor(1, 1, 0)
-    else
-        row.NameText:SetTextColor(1, 1, 1)
+    if playerName == UI.ExpandedPlayer and not UI.Theme:IsClassicTheme() then
+        local accentR, accentG, accentB = UI.Theme:GetColor("Accent")
+        row.NameText:SetTextColor(accentR, accentG, accentB)
     end
+
+    UI.Theme:ApplyRowStyle(row)
+    row.FlagLayer:SetFrameLevel(row:GetFrameLevel() + 5)
+    row.FlagLayer:Show()
+    row.FlagButton:SetFrameLevel(row.FlagLayer:GetFrameLevel() + 1)
 end

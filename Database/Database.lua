@@ -22,7 +22,7 @@ local DB = addon.DB
 -- Constants
 -- ---------------------------------------------------------------------------
 
-DB.VERSION = 2
+DB.VERSION = 3
 
 -- Settings
 DB.DEFAULT_SETTINGS = {
@@ -33,12 +33,14 @@ DB.DEFAULT_SETTINGS = {
     LockMainFrame = false,
     AllowResize = true,
     ShowRolodexTooltip = true,
+    SkinStyle = "forever",
 
     -- Business card columns and sorting
     ShowClass = true,
     ShowGuild = true,
     ShowGroups = true,
     ShowAverageRating = true,
+    ShowMostRecent = true,
     ShowFavoritesFirst = false,
     AutoExpandSelectedPlayer = true,
 
@@ -73,6 +75,10 @@ function DB:Initialize()
         RolodexDB.Settings or {}
 
     local settings = RolodexDB.Settings
+    if settings.SkinStyle == nil then
+        settings.SkinStyle = "forever"
+    end
+    settings.UseForeverTheme = nil
     if settings.AllowResize == nil and settings.LockWindowSize ~= nil then
         settings.AllowResize = not settings.LockWindowSize
     end
@@ -128,7 +134,7 @@ function DB:Initialize()
     )
 
     RolodexDB.Window = RolodexDB.Window or {}
-    RolodexDB.Window.Width = RolodexDB.Window.Width or 600
+    RolodexDB.Window.Width = RolodexDB.Window.Width or 780
     RolodexDB.Window.Height = RolodexDB.Window.Height or 380
     RolodexDB.Window.Point = RolodexDB.Window.Point or "CENTER"
     RolodexDB.Window.X = RolodexDB.Window.X or 0
@@ -246,6 +252,315 @@ function DB:WipeDatabase()
     end
     addon.ActiveSession = {}
     addon:DebugPrint("Rolodex database wiped.")
+end
+
+local IMPORT_STRING_FIELDS = {
+    "class",
+    "guild",
+    "lastSeenSpec",
+    "lastSeenRole",
+    "notes",
+}
+
+local IMPORT_NUMBER_FIELDS = {
+    "lastSeenLevel",
+    "firstGroupTogether",
+    "lastGroupTogether",
+    "firstSeen",
+    "lastSeen",
+    "groups",
+}
+
+local function IsFiniteNumber(value)
+    return type(value) == "number"
+        and value == value
+        and value ~= math.huge
+        and value ~= -math.huge
+end
+
+local function ValidateArray(value, label, validator)
+    if value == nil then
+        return {}
+    end
+    if type(value) ~= "table" then
+        return nil, label .. " must be an array."
+    end
+
+    local count, highest = 0, 0
+    for key in pairs(value) do
+        if type(key) ~= "number" or key < 1 or key % 1 ~= 0 then
+            return nil, label .. " contains an invalid array key."
+        end
+        count = count + 1
+        highest = math.max(highest, key)
+    end
+    if count ~= highest then
+        return nil, label .. " contains a missing array entry."
+    end
+
+    local result = {}
+    for index = 1, highest do
+        local item, err = validator(value[index], index)
+        if item == nil then
+            return nil, err
+        end
+        result[index] = item
+    end
+    return result
+end
+
+local function NormalizeImportedPlayer(name, source)
+    if type(name) ~= "string" or name == "" or type(source) ~= "table" then
+        return nil, "Each player must have a valid name and record."
+    end
+    if source.name ~= nil and source.name ~= name then
+        return nil, "A player record name does not match its database key."
+    end
+
+    local player = {
+        name = name,
+        class = "UNKNOWN",
+        guild = "",
+        lastSeenLevel = 0,
+        lastSeenSpec = "Unknown",
+        firstGroupTogether = 0,
+        lastGroupTogether = 0,
+        firstSeen = 0,
+        lastSeen = 0,
+        groups = 0,
+        groupHistory = {},
+        favorite = false,
+        avoid = false,
+        notes = "",
+        ratings = {},
+    }
+
+    for _, field in ipairs(IMPORT_STRING_FIELDS) do
+        local value = source[field]
+        if value ~= nil and type(value) ~= "string" then
+            return nil, "Player " .. name .. " has an invalid " .. field .. "."
+        end
+        if value ~= nil then
+            player[field] = value
+        end
+    end
+
+    for _, field in ipairs(IMPORT_NUMBER_FIELDS) do
+        local value = source[field]
+        if value ~= nil and (not IsFiniteNumber(value) or value < 0) then
+            return nil, "Player " .. name .. " has an invalid " .. field .. "."
+        end
+        if value ~= nil then
+            player[field] = value
+        end
+    end
+
+    for _, field in ipairs({ "favorite", "avoid" }) do
+        local value = source[field]
+        if value ~= nil and type(value) ~= "boolean" then
+            return nil, "Player " .. name .. " has an invalid " .. field .. "."
+        end
+        if value ~= nil then
+            player[field] = value
+        end
+    end
+
+    local groupHistory, groupError = ValidateArray(
+        source.groupHistory,
+        "Group history for " .. name,
+        function(entry)
+            if IsFiniteNumber(entry) and entry >= 0 then
+                return entry
+            end
+            if type(entry) == "table"
+                and IsFiniteNumber(entry.timestamp)
+                and entry.timestamp >= 0 then
+                return { timestamp = entry.timestamp }
+            end
+            return nil, "Player " .. name .. " has an invalid group history entry."
+        end
+    )
+    if not groupHistory then
+        return nil, groupError
+    end
+    player.groupHistory = groupHistory
+
+    local ratings, ratingError = ValidateArray(
+        source.ratings,
+        "Ratings for " .. name,
+        function(rating)
+            if type(rating) ~= "table"
+                or not IsFiniteNumber(rating.value)
+                or rating.value % 1 ~= 0
+                or rating.value < 1
+                or rating.value > 3 then
+                return nil, "Player " .. name .. " has an invalid rating."
+            end
+            local timestamp = rating.timestamp
+            if timestamp == nil then
+                timestamp = 0
+            end
+            if not IsFiniteNumber(timestamp) or timestamp < 0 then
+                return nil, "Player " .. name .. " has an invalid rating timestamp."
+            end
+            return { value = rating.value, timestamp = timestamp }
+        end
+    )
+    if not ratings then
+        return nil, ratingError
+    end
+    player.ratings = ratings
+    return player
+end
+
+function DB:ExportDatabase()
+    if not C_EncodingUtil or not C_EncodingUtil.SerializeJSON then
+        return nil, "This client does not provide JSON export support."
+    end
+
+    local payload = {
+        format = "Rolodex",
+        version = 1,
+        players = self:GetAllPlayers() or {},
+    }
+    local ok, serialized = pcall(C_EncodingUtil.SerializeJSON, payload)
+    if not ok then
+        return nil, "Could not encode the database: " .. tostring(serialized)
+    end
+    if type(serialized) ~= "string" then
+        return nil, "The client returned an invalid database export."
+    end
+    return serialized
+end
+
+function DB:DecodeImport(serialized)
+    if type(serialized) ~= "string" or serialized == "" then
+        return nil, "Paste a Rolodex export into the text box first."
+    end
+    if not C_EncodingUtil or not C_EncodingUtil.DeserializeJSON then
+        return nil, "This client does not provide JSON import support."
+    end
+
+    local ok, payload = pcall(C_EncodingUtil.DeserializeJSON, serialized)
+    if not ok then
+        return nil, "Could not read the JSON: " .. tostring(payload)
+    end
+    if type(payload) ~= "table"
+        or payload.format ~= "Rolodex"
+        or payload.version ~= 1
+        or type(payload.players) ~= "table" then
+        return nil, "This is not a supported Rolodex database export."
+    end
+
+    local players = {}
+    for name, source in pairs(payload.players) do
+        local player, err = NormalizeImportedPlayer(name, source)
+        if not player then
+            return nil, err
+        end
+        players[name] = player
+    end
+    return players
+end
+
+local function HistoryKey(entry, ratings)
+    if ratings then
+        return tostring(entry.value) .. ":" .. tostring(entry.timestamp)
+    end
+    if type(entry) == "table" then
+        return tostring(entry.timestamp)
+    end
+    return tostring(entry)
+end
+
+local function MergeHistory(first, second, ratings)
+    local result, seen = {}, {}
+    for _, history in ipairs({ first or {}, second or {} }) do
+        for _, entry in ipairs(history) do
+            local key = HistoryKey(entry, ratings)
+            if not seen[key] then
+                seen[key] = true
+                if type(entry) == "table" then
+                    result[#result + 1] = {
+                        value = entry.value,
+                        timestamp = entry.timestamp,
+                    }
+                else
+                    result[#result + 1] = entry
+                end
+            end
+        end
+    end
+    table.sort(result, function(a, b)
+        local timeA = type(a) == "table" and a.timestamp or a
+        local timeB = type(b) == "table" and b.timestamp or b
+        return timeA < timeB
+    end)
+    return result
+end
+
+local function MergePlayerRecords(existing, imported)
+    local existingTime = existing.lastSeen or 0
+    local importedTime = imported.lastSeen or 0
+    local newest, older = existing, imported
+    if importedTime > existingTime then
+        newest, older = imported, existing
+    end
+
+    local merged = {}
+    for key, value in pairs(newest) do
+        merged[key] = value
+    end
+    for key, value in pairs(older) do
+        if merged[key] == nil then
+            merged[key] = value
+        end
+    end
+    merged.groupHistory = MergeHistory(existing.groupHistory, imported.groupHistory, false)
+    merged.ratings = MergeHistory(existing.ratings, imported.ratings, true)
+    merged.groups = math.max(existing.groups or 0, imported.groups or 0)
+    return merged
+end
+
+function DB:ImportDatabase(serialized, mode)
+    if mode ~= "merge" and mode ~= "replace" then
+        return nil, "Choose merge or replace for the import."
+    end
+
+    local imported, err = self:DecodeImport(serialized)
+    if not imported then
+        return nil, err
+    end
+
+    local players = {}
+    local added, updated = 0, 0
+    if mode == "merge" then
+        for name, player in pairs(self:GetAllPlayers() or {}) do
+            players[name] = player
+        end
+    end
+
+    for name, player in pairs(imported) do
+        local existing = players[name]
+        if mode == "merge" and existing then
+            players[name] = MergePlayerRecords(existing, player)
+            updated = updated + 1
+        else
+            players[name] = player
+            added = added + 1
+        end
+    end
+
+    RolodexDB.players = players
+    if addon.UI then
+        addon.UI.ExpandedPlayer = nil
+        addon.UI.SelectedRow = nil
+        if addon.UI.Refresh then
+            addon.UI:Refresh()
+        end
+    end
+    addon.ActiveSession = {}
+    return { added = added, updated = updated, total = self:GetPlayerCount() }
 end
 
 

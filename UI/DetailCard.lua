@@ -34,24 +34,40 @@ function DetailCard:Create(parent)
     local card = CreateFrame(
         "Frame",
         nil,
-        parent
+        parent,
+        addon.UI.Theme:IsClassicTheme() and "BasicFrameTemplateWithInset" or nil
     )
 
     card:SetSize(480, 240)
     card:SetFrameStrata("HIGH")
     card:SetFrameLevel(100)
     card:Hide()
-    if card.CloseButton then
+    if card.CloseButton and not addon.UI.Theme:IsClassicTheme() then
         card.CloseButton:Hide()
     end
-    if card.Bg then
+    if card.TitleText then
+        card.TitleText:SetText("Player Details")
+    end
+    if card.CloseButton then
+        card.CloseButton:SetScript("OnClick", function()
+            UI.SelectedRow = nil
+            UI.ExpandedPlayer = nil
+            UI:Refresh()
+        end)
+    end
+    if card.Bg and not addon.UI.Theme:IsClassicTheme() then
         card.Bg:Hide()
     end
     addon.UI.Theme:ApplyPaperBackground(card)
 
+    local content = CreateFrame("Frame", nil, card)
+    content:SetAllPoints(card)
+    content:SetFrameLevel(card:GetFrameLevel() + 2)
+    card.Content = content
+
     -- Notes
     card.NotesHeader = CreateText(
-        card,
+        content,
         "GameFontHighlight",
         "TOPLEFT",
         card,
@@ -62,7 +78,7 @@ function DetailCard:Create(parent)
     addon.UI.Theme:ApplyHeaderStyle(card.NotesHeader)
 
     card.NotesText = CreateText(
-        card,
+        content,
         "GameFontNormalSmall",
         "TOPLEFT",
         card.NotesHeader,
@@ -77,14 +93,14 @@ function DetailCard:Create(parent)
     card.NotesText:SetJustifyH("LEFT")
 
     -- Divider
-    card.Divider = card:CreateTexture(nil, "OVERLAY")
+    card.Divider = content:CreateTexture(nil, "OVERLAY")
     card.Divider:SetSize(450, 0)
     card.Divider:SetPoint("TOPLEFT", card.NotesText, "BOTTOMLEFT", 0, -10)
     addon.UI.Theme:ApplyDividerStyle(card.Divider)
 
     -- Character column
     card.CharacterHeader = CreateText(
-        card,
+        content,
         "GameFontHighlight",
         "TOPLEFT",
         card.Divider,
@@ -96,7 +112,7 @@ function DetailCard:Create(parent)
     addon.UI.Theme:ApplyHeaderStyle(card.CharacterHeader)
 
     card.LastLevelText = CreateText(
-        card,
+        content,
         "GameFontNormal",
         "TOPLEFT",
         card.CharacterHeader,
@@ -107,7 +123,7 @@ function DetailCard:Create(parent)
     addon.UI.Theme:ApplyBodyStyle(card.LastLevelText)
 
     card.LastRoleLabel = CreateText(
-        card,
+        content,
         "GameFontNormal",
         "TOPLEFT",
         card.LastLevelText,
@@ -118,7 +134,7 @@ function DetailCard:Create(parent)
     addon.UI.Theme:ApplyBodyStyle(card.LastRoleLabel)
 
     card.LastRoleValue = CreateText(
-        card,
+        content,
         "GameFontNormal",
         "LEFT",
         card.LastRoleLabel,
@@ -127,10 +143,11 @@ function DetailCard:Create(parent)
         0
     )
 
-    card.DeletePlayerButton = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
+    card.DeletePlayerButton = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     card.DeletePlayerButton:SetSize(60, 22)
     card.DeletePlayerButton:SetPoint("TOPLEFT", card.LastRoleLabel, "BOTTOMLEFT", 0, -12)
     card.DeletePlayerButton:SetText("Delete")
+    addon.UI.Theme:ApplyButtonStyle(card.DeletePlayerButton)
     card.DeletePlayerButton:SetScript("OnClick", function()
         local playerName = UI.ExpandedPlayer
         if playerName then
@@ -140,7 +157,7 @@ function DetailCard:Create(parent)
 
     -- Rating column
     card.RatingHeader = CreateText(
-        card,
+        content,
         "GameFontHighlight",
         "TOPLEFT",
         card.Divider,
@@ -152,7 +169,7 @@ function DetailCard:Create(parent)
     addon.UI.Theme:ApplyHeaderStyle(card.RatingHeader)
 
     card.CurrentRatingText = CreateText(
-        card,
+        content,
         "GameFontNormal",
         "TOPLEFT",
         card.RatingHeader,
@@ -164,7 +181,7 @@ function DetailCard:Create(parent)
 
     -- Group history column
     card.HistoryHeader = CreateText(
-        card,
+        content,
         "GameFontHighlight",
         "TOPLEFT",
         card.Divider,
@@ -175,7 +192,7 @@ function DetailCard:Create(parent)
     card.HistoryHeader:SetText("Group History")
     addon.UI.Theme:ApplyHeaderStyle(card.HistoryHeader)
 
-    card.HistoryScrollFrame = CreateFrame("ScrollFrame", nil, card, "UIPanelScrollFrameTemplate")
+    card.HistoryScrollFrame = CreateFrame("ScrollFrame", nil, content, "UIPanelScrollFrameTemplate")
     card.HistoryScrollFrame:SetPoint("TOPLEFT", card.HistoryHeader, "BOTTOMLEFT", 0, -8)
     card.HistoryScrollFrame:SetSize(170, 150)
     card.HistoryContent = CreateFrame("Frame", nil, card.HistoryScrollFrame)
@@ -184,23 +201,26 @@ function DetailCard:Create(parent)
     card.HistoryRows = {}
 
     -- Manual rating controls
-    card.Rating1Button = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
+    card.Rating1Button = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     card.Rating1Button:SetSize(25, 20)
     card.Rating1Button:SetPoint("TOPLEFT", card.CurrentRatingText, "BOTTOMLEFT", 0, -10)
     card.Rating1Button:SetText("1")
 
-    card.Rating2Button = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
+    card.Rating2Button = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     card.Rating2Button:SetSize(25, 20)
     card.Rating2Button:SetPoint("LEFT", card.Rating1Button, "RIGHT", 5, 0)
     card.Rating2Button:SetText("2")
 
-    card.Rating3Button = CreateFrame("Button", nil, card, "UIPanelButtonTemplate")
+    card.Rating3Button = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
     card.Rating3Button:SetSize(25, 20)
     card.Rating3Button:SetPoint("LEFT", card.Rating2Button, "RIGHT", 5, 0)
     card.Rating3Button:SetText("3")
+    addon.UI.Theme:ApplyButtonStyle(card.Rating1Button)
+    addon.UI.Theme:ApplyButtonStyle(card.Rating2Button)
+    addon.UI.Theme:ApplyButtonStyle(card.Rating3Button)
 
     card.LastRatingText = CreateText(
-        card,
+        content,
         "GameFontNormal",
         "TOPLEFT",
         card.Rating1Button,

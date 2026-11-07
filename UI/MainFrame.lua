@@ -7,6 +7,9 @@ addon.UI = addon.UI or {}
 
 local UI = addon.UI
 
+local MIN_FRAME_WIDTH = 850
+local DEFAULT_FRAME_WIDTH = 850
+
 -- Helpers
 -- ===========================================================================
 
@@ -71,7 +74,7 @@ function UI:CreateMainFrame()
     )
 
     frame:SetSize(
-        math.max(550, RolodexDB.Window.Width),
+        math.max(MIN_FRAME_WIDTH, RolodexDB.Window.Width or DEFAULT_FRAME_WIDTH),
         RolodexDB.Window.Height
 )
     frame:SetPoint(
@@ -81,10 +84,6 @@ function UI:CreateMainFrame()
         RolodexDB.Window.X,
         RolodexDB.Window.Y
 )
-
-    if frame.Bg then
-        frame.Bg:Hide()
-    end
 
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -129,7 +128,7 @@ function UI:CreateMainFrame()
     frame:SetScript(
         "OnSizeChanged",
         function(self, width, height)
-            local minWidth = 315
+            local minWidth = MIN_FRAME_WIDTH
             local minHeight = 315
             local clampedWidth = math.max(minWidth, width)
             local clampedHeight = math.max(minHeight, height)
@@ -169,81 +168,15 @@ function UI:CreateMainFrame()
     frame.ResizeButton:SetShown(addon.DB:GetSetting("AllowResize"))
 
     self.MainFrame = frame
+    addon.UI.Theme:ApplyPaperBackground(frame, true)
 
     -- Title
     -- ==========================================================
 
-    frame.title = frame:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontHighlight"
-    )
-
-    frame.title:SetPoint(
-        "TOPLEFT",
-        50,
-        -8
-    )
-
-    frame.title:SetText("Rolodex")
-    frame.title:SetTextColor(1, 1, 1)
+    frame.title = addon.UI.Theme:CreateTitlePlate(frame, "Rolodex").Title
 
     frame.SearchBox = addon.UI.Search:Create(frame)
-    frame.SearchBox:SetTextColor(1, 1, 1)
-
-    -- Sort button (cycling for now)
-    -- =========================================================
-    frame.SortButton = CreateFrame(
-        "Button",
-        nil,
-        frame,
-        "UIPanelButtonTemplate"
-    )
-
-    frame.SortButton:SetSize(100, 22)
-
-    local sortLabels = {
-        NAME = "Name",
-        CLASS = "Class",
-        GUILD = "Guild",
-        RATING = "Rating",
-        GROUPS = "Groups"
-    }
-
-    frame.SortButton:SetText("Sort: " .. sortLabels[UI.SortMode])
-    frame.SortButton:SetScript(
-        "OnClick",
-        function()
-
-            if UI.SortMode == "NAME" then
-
-                UI.SortMode = "CLASS"
-
-            elseif UI.SortMode == "CLASS" then
-
-                UI.SortMode = "GUILD"
-
-            elseif UI.SortMode == "GUILD" then
-
-                UI.SortMode = "RATING"
-
-            elseif UI.SortMode == "RATING" then
-
-                UI.SortMode = "GROUPS"
-
-            else
-
-                UI.SortMode = "NAME"
-
-            end
-
-            frame.SortButton:SetText(
-                "Sort: " .. sortLabels[UI.SortMode]
-            )
-
-            UI:Refresh()
-        end
-    )
+    addon.UI.Theme:ApplyEditBoxStyle(frame.SearchBox)
 
     frame.SettingsButton = CreateFrame(
         "Button",
@@ -269,7 +202,7 @@ function UI:CreateMainFrame()
     frame.SettingsButton.Icon:SetTexture(
         "Interface\\Buttons\\UI-OptionsButton"
     )
-    frame.SettingsButton.Icon:SetVertexColor(1, 0.2, 0.2)
+    addon.UI.Theme:ApplyButtonStyle(frame.SettingsButton)
     frame.SettingsButton:SetScript(
         "OnEnter",
         function(button)
@@ -291,29 +224,23 @@ function UI:CreateMainFrame()
         end
     )
 
-    frame.SortButton:SetPoint(
-        "RIGHT",
-        frame.SettingsButton,
-        "LEFT",
-        -6,
-        0
-    )
     frame.SearchBox:SetPoint(
         "RIGHT",
-        frame.SortButton,
+        frame.SettingsButton,
         "LEFT",
         -8,
         0
     )
 
     local columnHeaders = {
-        { name = "Flag", x = 25 },
-        { name = "Name", x = 50 },
-        { name = "Class", x = 205, setting = "ShowClass" },
-        { name = "Guild", x = 285, setting = "ShowGuild" },
-        { name = "Rating", x = 425, setting = "ShowAverageRating" },
-        { name = "Groups", x = 475, setting = "ShowGroups" },
-        { name = "Notes", x = 525 }
+        { name = "Flag", x = 20, width = 55, sortMode = "FLAG" },
+        { name = "Name", x = 80, width = 180, sortMode = "NAME" },
+        { name = "Class", x = 205, width = 90, setting = "ShowClass", sortMode = "CLASS" },
+        { name = "Guild", x = 285, width = 135, setting = "ShowGuild", sortMode = "GUILD" },
+        { name = "Rating", x = 425, width = 75, setting = "ShowAverageRating", sortMode = "RATING" },
+        { name = "Groups", x = 475, width = 75, setting = "ShowGroups", sortMode = "GROUPS" },
+        { name = "Most Recent", x = 500, width = 105, setting = "ShowMostRecent", sortMode = "MOST_RECENT" },
+        { name = "Notes", x = 625, width = 75, sortMode = "NOTES" }
     }
 
 -- Player Rows
@@ -371,7 +298,7 @@ frame.ScrollChild =
     )
 
 frame.ScrollChild:SetSize(
-    560,
+560,
     frame.ScrollFrame:GetHeight()
 )
 
@@ -436,13 +363,16 @@ frame.ColumnHeaderOverlay:SetFrameLevel(
     frame.ScrollChild:GetFrameLevel() + 1
 )
 
+frame.ColumnHeaderBand = frame:CreateTexture(nil, "ARTWORK")
+frame.ColumnHeaderBand:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -27)
+frame.ColumnHeaderBand:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -30, -27)
+frame.ColumnHeaderBand:SetHeight(22)
+addon.UI.Theme:ApplyHeaderBand(frame.ColumnHeaderBand)
+
 frame.ColumnHeaders = {}
 for _, column in ipairs(columnHeaders) do
-    local header = frame.ColumnHeaderOverlay:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormalSmall"
-    )
+    local header = CreateFrame("Button", nil, frame.ColumnHeaderOverlay)
+    header:SetSize(column.width, 22)
     header:SetPoint(
         "TOPLEFT",
         frame.ColumnHeaderOverlay,
@@ -450,9 +380,36 @@ for _, column in ipairs(columnHeaders) do
         column.x,
         -34
     )
-    header:SetText(column.name)
-    header:SetTextColor(1, 1, 1)
+    header.Label = header:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    header.Label:SetAllPoints(header)
+    local centeredHeader = column.name == "Flag"
+        or column.name == "Rating"
+        or column.name == "Groups"
+        or column.name == "Most Recent"
+        or column.name == "Notes"
+    header.Label:SetJustifyH(centeredHeader and "CENTER" or "LEFT")
+    header.Label:SetJustifyV("MIDDLE")
+    header.Label:SetText(column.name)
+    header.Highlight = header:CreateTexture(nil, "BACKGROUND")
+    header.Highlight:SetAllPoints()
+    header.Highlight:SetColorTexture(1, 1, 1, 0.12)
+    header.Highlight:Hide()
     header.VisibilitySetting = column.setting
+    header.SortMode = column.sortMode
+    if not addon.UI.Theme:IsClassicTheme() then
+        header:SetScript("OnEnter", function(self)
+            self.Highlight:Show()
+        end)
+        header:SetScript("OnLeave", function(self)
+            self.Highlight:Hide()
+        end)
+    end
+    if column.sortMode then
+        header:SetScript("OnClick", function(self)
+            UI.SortMode = self.SortMode
+            UI:Refresh()
+        end)
+    end
     frame.ColumnHeaders[column.name] = header
 end
 
@@ -474,7 +431,8 @@ frame.DetailCard =
     frame.NotesFrame = CreateFrame(
         "Frame",
         nil,
-        frame
+        frame,
+        addon.UI.Theme:IsClassicTheme() and "BasicFrameTemplateWithInset" or nil
     )
 
     frame.NotesFrame:SetSize(
@@ -490,7 +448,7 @@ frame.DetailCard =
         "DIALOG"
     )
 
-    addon.UI.Theme:ApplyPaperBackground(frame.NotesFrame)
+    addon.UI.Theme:ApplyPaperBackground(frame.NotesFrame, true)
 
     frame.NotesFrame:Hide()
 
@@ -500,18 +458,21 @@ frame.DetailCard =
     -- Note FrameTitle
     -- ==========================================================
 
-    notesFrame.Title =
-        notesFrame:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontHighlight"
-        )
+    notesFrame.Title = notesFrame.TitleText
+    if not notesFrame.Title then
+        notesFrame.Title =
+            notesFrame:CreateFontString(
+                nil,
+                "OVERLAY",
+                "GameFontHighlight"
+            )
 
-    notesFrame.Title:SetPoint(
-        "TOP",
-        0,
-        -10
-    )
+        notesFrame.Title:SetPoint(
+            "TOP",
+            0,
+            -17
+        )
+    end
 
     notesFrame.Title:SetText(
         "Player Notes"
@@ -553,19 +514,36 @@ frame.DetailCard =
         CreateFrame(
             "EditBox",
             nil,
-            notesFrame.ScrollFrame)
+            notesFrame.ScrollFrame,
+            addon.UI.Theme:IsClassicTheme() and "InputBoxTemplate" or nil
+        )
     notesFrame.EditBox:SetMultiLine(true)
     notesFrame.EditBox:SetFontObject(ChatFontNormal)
     notesFrame.EditBox:SetAutoFocus(false)
     notesFrame.EditBox:EnableMouse(true)
-    notesFrame.EditBox:SetWidth(320)
+    notesFrame.EditBox:SetPoint("TOPLEFT", notesFrame.ScrollFrame, "TOPLEFT", 2, -2)
+    notesFrame.EditBox:SetTextInsets(6, 6, 6, 6)
+    if notesFrame.EditBox.SetNonSpaceWrap then
+        notesFrame.EditBox:SetNonSpaceWrap(true)
+    end
     notesFrame.EditBox:SetText("")
     addon.UI.Theme:ApplyBodyStyle(
         notesFrame.EditBox
     )
+    addon.UI.Theme:ApplyEditBoxStyle(notesFrame.EditBox)
     notesFrame.ScrollFrame:SetScrollChild(
         notesFrame.EditBox
     )
+    local function UpdateNotesEditBoxSize()
+        local width = math.max(1, notesFrame.ScrollFrame:GetWidth() - 2)
+        notesFrame.EditBox:SetWidth(width)
+        local textHeight = notesFrame.EditBox:GetStringHeight() + 16
+        notesFrame.EditBox:SetHeight(math.max(notesFrame.ScrollFrame:GetHeight(), textHeight))
+    end
+    notesFrame.ScrollFrame:SetScript("OnSizeChanged", UpdateNotesEditBoxSize)
+    notesFrame.EditBox:SetScript("OnTextChanged", UpdateNotesEditBoxSize)
+    notesFrame:SetScript("OnShow", UpdateNotesEditBoxSize)
+    UpdateNotesEditBoxSize()
     -- Note Frame Save Button
     -- ==========================================================
 
@@ -591,6 +569,7 @@ frame.DetailCard =
     notesFrame.SaveButton:SetText(
         "Save"
     )
+    addon.UI.Theme:ApplyButtonStyle(notesFrame.SaveButton)
 
     notesFrame.SaveButton:SetScript(
     "OnClick",
@@ -614,9 +593,11 @@ frame.DetailCard =
     notesFrame.CancelButton:SetSize(100, 22)
     notesFrame.CancelButton:SetPoint("BOTTOMRIGHT", -80, 15)
     notesFrame.CancelButton:SetText("Cancel")
+    addon.UI.Theme:ApplyButtonStyle(notesFrame.CancelButton)
     notesFrame.CancelButton:SetScript("OnClick", function()
         notesFrame:Hide()
     end)
+    addon.UI.Theme:ApplyMainFrame(frame)
     frame:Hide()
 end
 
@@ -635,27 +616,37 @@ end
 function UI:ResetWindowSize()
     local frame = self.MainFrame
 
-    frame:SetSize(800, 500)
+    frame:SetSize(DEFAULT_FRAME_WIDTH, 500)
 
-    RolodexDB.Window.Width = 800
+    RolodexDB.Window.Width = DEFAULT_FRAME_WIDTH
     RolodexDB.Window.Height = 500
 end
 
 function UI:UpdateColumnLayout()
     local frame = self.MainFrame
     local headers = frame.ColumnHeaders
-    local cursor = 180
+    local cursor = 235
+    local mostRecent = addon.DB:GetSetting("ShowMostRecent")
 
-    local function setRowAnchor(field, x)
+    local function setRowAnchor(field, x, width, centered)
         for _, row in ipairs(frame.Rows) do
             row[field]:ClearAllPoints()
             row[field]:SetPoint("LEFT", row, "LEFT", x, 0)
+            if width then
+                row[field]:SetWidth(width)
+            end
+            if centered then
+                row[field]:SetJustifyH("CENTER")
+            end
         end
     end
 
-    local function setHeaderAnchor(name, x)
+    local function setHeaderAnchor(name, x, width)
         local header = headers[name]
         header:ClearAllPoints()
+        if width then
+            header:SetWidth(width)
+        end
         header:SetPoint(
             "TOPLEFT",
             frame.ColumnHeaderOverlay,
@@ -665,13 +656,13 @@ function UI:UpdateColumnLayout()
         )
     end
 
-    local function configureColumn(name, setting, field, spacing)
+    local function configureColumn(name, setting, field, spacing, centered)
         local enabled = addon.DB:GetSetting(setting)
         local header = headers[name]
 
         if enabled then
-            setRowAnchor(field, cursor)
-            setHeaderAnchor(name, cursor + 25)
+            setRowAnchor(field, cursor, spacing, centered)
+            setHeaderAnchor(name, cursor + 25, spacing)
             header:Show()
             cursor = cursor + spacing
         else
@@ -682,13 +673,37 @@ function UI:UpdateColumnLayout()
         end
     end
 
-    configureColumn("Class", "ShowClass", "ClassText", 80)
-    configureColumn("Guild", "ShowGuild", "GuildText", 125)
-    configureColumn("Rating", "ShowAverageRating", "RatingText", 45)
-    configureColumn("Groups", "ShowGroups", "GroupsText", 45)
+    configureColumn("Class", "ShowClass", "ClassText", 90)
+    configureColumn("Guild", "ShowGuild", "GuildText", 135)
+    configureColumn("Rating", "ShowAverageRating", "RatingText", 75, true)
+    configureColumn("Groups", "ShowGroups", "GroupsText", 75, true)
 
-    setRowAnchor("NoteButton", cursor)
-    setHeaderAnchor("Notes", cursor + 25)
+    if mostRecent then
+        setRowAnchor("MostRecentText", cursor, 105, true)
+        setHeaderAnchor("Most Recent", cursor + 25, 105)
+        headers["Most Recent"]:Show()
+        cursor = cursor + 105
+    else
+        headers["Most Recent"]:Hide()
+        for _, row in ipairs(frame.Rows) do
+            row.MostRecentText:Hide()
+        end
+    end
+
+    setRowAnchor("NoteButton", cursor + 27.5)
+    setHeaderAnchor("Notes", cursor + 25, 75)
+
+    local requiredContentWidth = cursor + 75
+    local rowWidth = math.max(720, requiredContentWidth)
+    for _, row in ipairs(frame.Rows) do
+        row:SetWidth(rowWidth)
+    end
+    local scrollChildWidth = rowWidth + 15
+    frame.ScrollChild:SetWidth(scrollChildWidth)
+    local requiredFrameWidth = scrollChildWidth + 40
+    if frame:GetWidth() < requiredFrameWidth then
+        frame:SetWidth(requiredFrameWidth)
+    end
 
     headers.Flag:Show()
     headers.Name:Show()
@@ -728,13 +743,22 @@ function UI:RefreshPlayerList()
     table.sort(
         playerNames,
         function(a, b)
-            local favoritePriority = self:IsFavoritePriority(a, b)
-            if favoritePriority ~= nil then
-                return favoritePriority
-            end
-
             local playerA = addon.DB:GetPlayer(a)
             local playerB = addon.DB:GetPlayer(b)
+
+            if self.SortMode == "FLAG" then
+                local flagPriorityA = playerA.favorite and 0 or (playerA.avoid and 2 or 1)
+                local flagPriorityB = playerB.favorite and 0 or (playerB.avoid and 2 or 1)
+
+                if flagPriorityA ~= flagPriorityB then
+                    return flagPriorityA < flagPriorityB
+                end
+            else
+                local favoritePriority = self:IsFavoritePriority(a, b)
+                if favoritePriority ~= nil then
+                    return favoritePriority
+                end
+            end
 
             if self.SortMode == "CLASS" then
                 local classA = addon.UI.Theme:FormatClassName(playerA.class)
@@ -762,12 +786,33 @@ function UI:RefreshPlayerList()
                 if groupsA ~= groupsB then
                     return groupsA > groupsB
                 end
+            elseif self.SortMode == "MOST_RECENT" then
+                local mostRecentA = playerA.lastGroupTogether or 0
+                local mostRecentB = playerB.lastGroupTogether or 0
+
+                if mostRecentA <= 0 then
+                    mostRecentA = playerA.lastSeen or 0
+                end
+                if mostRecentB <= 0 then
+                    mostRecentB = playerB.lastSeen or 0
+                end
+
+                if mostRecentA ~= mostRecentB then
+                    return mostRecentA > mostRecentB
+                end
             elseif self.SortMode == "GUILD" then
                 local guildA = playerA.guild or ""
                 local guildB = playerB.guild or ""
 
                 if guildA ~= guildB then
                     return guildA < guildB
+                end
+            elseif self.SortMode == "NOTES" then
+                local hasNotesA = playerA.notes and playerA.notes ~= ""
+                local hasNotesB = playerB.notes and playerB.notes ~= ""
+
+                if hasNotesA ~= hasNotesB then
+                    return hasNotesA
                 end
             end
 
@@ -910,13 +955,7 @@ function UI:RefreshDetailCard()
 
     card:ClearAllPoints()
 
-    card:SetPoint(
-        "TOPLEFT",
-        selectedRow,
-        "BOTTOMLEFT",
-        17,
-        25
-    )
+    card:SetPoint("TOPLEFT", selectedRow, "BOTTOMLEFT", 17, -8)
 
     addon.UI.DetailCard:Refresh(
         card,
@@ -946,6 +985,35 @@ function UI:ToggleMainFrame()
 
     end
 
+end
+
+function UI:ShowPlayer(playerName)
+    if not addon.DB:GetPlayer(playerName) then
+        return false
+    end
+
+    if not self.MainFrame then
+        self:CreateMainFrame()
+    end
+
+    local frame = self.MainFrame
+    frame:Show()
+    frame.SearchBox:SetText(playerName)
+    self.SearchText = playerName
+    self.SelectedRow = nil
+    self.ExpandedPlayer = nil
+    self:Refresh()
+
+    for _, row in ipairs(frame.Rows) do
+        if row.PlayerName == playerName then
+            self.SelectedRow = row
+            self.ExpandedPlayer = playerName
+            break
+        end
+    end
+
+    self:Refresh()
+    return self.ExpandedPlayer == playerName
 end
 
 -- ============================================================================

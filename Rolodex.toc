@@ -2,6 +2,7 @@
 ## Title: Rolodex
 ## Author: madloc2525
 ## Version: 1.0.0
+## OptionalDeps: Blizzard_UnitPopupShared, Blizzard_UnitPopup, EllesmereUI, EllesmereUIBlizzardSkin, EllesmereUIDataBars
 ## SavedVariables: RolodexDB
 
 Rolodex.lua
@@ -17,9 +18,11 @@ UI\BusinessCard.lua
 UI\DetailCard.lua
 UI\Search.lua
 UI\MainFrame.lua
+UI\ChatContextMenu.lua
 UI\Settings.lua
 UI\Tooltips.lua
 UI\RatingPrompt.lua
+Integration\EllesmereDataBars.lua
 
 # Later editions
 

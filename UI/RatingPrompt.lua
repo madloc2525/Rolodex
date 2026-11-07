@@ -22,7 +22,8 @@ function RatingPrompt:CreateWindow()
         CreateFrame(
             "Frame",
             "RolodexRatingPrompt",
-            UIParent
+            UIParent,
+            addon.UI.Theme:IsClassicTheme() and "BasicFrameTemplateWithInset" or nil
         )
 
     frame:SetSize(
@@ -63,7 +64,7 @@ function RatingPrompt:CreateWindow()
         "DIALOG"
     )
 
-    addon.UI.Theme:ApplyPaperBackground(frame)
+    addon.UI.Theme:ApplyPaperBackground(frame, true)
 
     local savedPosition =
         RolodexDB and RolodexDB.ratingPromptPosition
@@ -80,18 +81,21 @@ function RatingPrompt:CreateWindow()
 
     frame:Hide()
 
-    frame.Title =
-        frame:CreateFontString(
-            nil,
-            "OVERLAY",
-            "GameFontHighlight"
-        )
+    frame.Title = frame.TitleText
+    if not frame.Title then
+        frame.Title =
+            frame:CreateFontString(
+                nil,
+                "OVERLAY",
+                "GameFontHighlight"
+            )
 
-    frame.Title:SetPoint(
-        "TOP",
-        0,
-        -34
-    )
+        frame.Title:SetPoint(
+            "TOP",
+            0,
+            -12
+        )
+    end
 
     frame.Title:SetText(
         "Session Review"
@@ -108,7 +112,7 @@ function RatingPrompt:CreateWindow()
     frame.PlayerName:SetPoint(
         "TOP",
         0,
-        -56
+        -34
     )
     addon.UI.Theme:ApplyHeaderStyle(frame.PlayerName)
 
@@ -129,8 +133,10 @@ function RatingPrompt:CreateWindow()
         -4
     )
     addon.UI.Theme:ApplyBodyStyle(frame.ClassText)
-    frame.ClassText:SetShadowColor(0, 0, 0, 1)
-    frame.ClassText:SetShadowOffset(1, -1)
+    if not addon.UI.Theme:IsClassicTheme() then
+        frame.ClassText:SetShadowColor(0, 0, 0, 1)
+        frame.ClassText:SetShadowOffset(1, -1)
+    end
 
     -- Role
 
@@ -149,8 +155,10 @@ function RatingPrompt:CreateWindow()
         -4
     )
     addon.UI.Theme:ApplyBodyStyle(frame.RoleText)
-    frame.RoleText:SetShadowColor(0, 0, 0, 1)
-    frame.RoleText:SetShadowOffset(1, -1)
+    if not addon.UI.Theme:IsClassicTheme() then
+        frame.RoleText:SetShadowColor(0, 0, 0, 1)
+        frame.RoleText:SetShadowOffset(1, -1)
+    end
 
     frame.GuildText =
         frame:CreateFontString(
@@ -289,6 +297,10 @@ function RatingPrompt:CreateWindow()
     frame.SkipButton:SetText(
         "»"
     )
+    addon.UI.Theme:ApplyButtonStyle(frame.Rating1)
+    addon.UI.Theme:ApplyButtonStyle(frame.Rating2)
+    addon.UI.Theme:ApplyButtonStyle(frame.Rating3)
+    addon.UI.Theme:ApplyButtonStyle(frame.SkipButton)
     frame.SkipButton:SetScript(
         "OnEnter",
         function(button)
@@ -345,27 +357,25 @@ function RatingPrompt:CreateWindow()
 
 end
 
-function RatingPrompt:BuildQueue()
-
-    self.PlayerQueue = {}
-
-    for name in pairs(
-        addon.ActiveSession
-    ) do
-
-        table.insert(
-            self.PlayerQueue,
-            name
-        )
-
+function RatingPrompt:BuildQueue(playerNames)
+    if not self.PlayerQueue then
+        self.PlayerQueue = {}
+        self.QueuedPlayers = {}
+        self.CurrentIndex = 1
     end
 
-    table.sort(
-        self.PlayerQueue
-    )
+    local additions = {}
+    for _, name in ipairs(playerNames or {}) do
+        if not self.QueuedPlayers[name] then
+            self.QueuedPlayers[name] = true
+            additions[#additions + 1] = name
+        end
+    end
+    table.sort(additions)
 
-    self.CurrentIndex = 1
-
+    for _, name in ipairs(additions) do
+        self.PlayerQueue[#self.PlayerQueue + 1] = name
+    end
 end
 
 function RatingPrompt:Refresh()
@@ -377,9 +387,10 @@ function RatingPrompt:Refresh()
 
     if not playerName then
 
-        addon.ActiveSession = {}
-
         self.Frame:Hide()
+        self.PlayerQueue = {}
+        self.QueuedPlayers = {}
+        self.CurrentIndex = 1
 
         return
 
@@ -488,6 +499,11 @@ function RatingPrompt:Rate(value)
             self.CurrentIndex
         ]
 
+    if not playerName then
+        self:Refresh()
+        return
+    end
+
     addon.DB:AddRating(
         playerName,
         value
@@ -497,7 +513,7 @@ function RatingPrompt:Rate(value)
 
 end
 
-function RatingPrompt:Show()
+function RatingPrompt:Show(playerNames)
 
     if not addon.DB:GetSetting("EnableRatingPrompt") then
         if self.Frame then
@@ -512,7 +528,24 @@ function RatingPrompt:Show()
 
     end
 
-    self:BuildQueue()
+    if not self.Frame:IsShown() then
+        self.PlayerQueue = {}
+        self.QueuedPlayers = {}
+        self.CurrentIndex = 1
+    end
+
+    if not playerNames then
+        playerNames = {}
+        for name in pairs(addon.ActiveSession) do
+            playerNames[#playerNames + 1] = name
+        end
+    end
+
+    self:BuildQueue(playerNames)
+
+    if not self.PlayerQueue[self.CurrentIndex] then
+        return
+    end
 
     self:Refresh()
 

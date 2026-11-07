@@ -32,6 +32,7 @@ function Search:Create(parent)
         0
     )
     searchBox.Placeholder:SetText("Search players")
+    addon.UI.Theme:ApplyBodyStyle(searchBox.Placeholder)
 
     searchBox:SetScript(
         "OnTextChanged",
